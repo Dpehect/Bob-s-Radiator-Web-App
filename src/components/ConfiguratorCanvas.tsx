@@ -8,7 +8,7 @@ import * as THREE from "three";
 import { useHeatStore } from "@/store/useHeatStore";
 import BackdropShimmer from "./BackdropShimmer";
 
-// Simple deterministic PRNG for React 19 render purity
+// Simple deterministic PRNG for React render purity
 const createPRNG = (seed: number) => {
   let s = seed;
   return () => {
@@ -136,33 +136,29 @@ function ConfiguratorParticles({ count = 80 }) {
 const createProceduralTexture = (surface: "brass" | "black" | "terracotta" | "copper") => {
   if (typeof window === "undefined") return null;
   const canvas = document.createElement("canvas");
-  canvas.width = 256;
-  canvas.height = 256;
+  canvas.width = 128; // Reduced size to optimize texture uploads
+  canvas.height = 128;
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
 
-  // Base neutral fill
   ctx.fillStyle = "#808080";
-  ctx.fillRect(0, 0, 256, 256);
+  ctx.fillRect(0, 0, 128, 128);
 
-  const imgData = ctx.getImageData(0, 0, 256, 256);
+  const imgData = ctx.getImageData(0, 0, 128, 128);
   const data = imgData.data;
 
-  // Generate pattern based on surface type
   if (surface === "brass") {
-    // Brushed linear metal texture: vertical lines
-    for (let x = 0; x < 256; x++) {
+    for (let x = 0; x < 128; x++) {
       const colNoise = Math.sin(x * 0.45) * 12 + (Math.random() - 0.5) * 35;
-      for (let y = 0; y < 256; y++) {
+      for (let y = 0; y < 128; y++) {
         const val = Math.max(0, Math.min(255, 128 + colNoise + (Math.random() - 0.5) * 12));
-        const idx = (y * 256 + x) * 4;
+        const idx = (y * 128 + x) * 4;
         data[idx] = val;
         data[idx + 1] = val;
         data[idx + 2] = val;
       }
     }
   } else if (surface === "black") {
-    // Coarse, hammered cast iron: cellular blobs + noise
     for (let i = 0; i < data.length; i += 4) {
       const val = Math.max(0, Math.min(255, 128 + (Math.random() - 0.5) * 25));
       data[i] = val;
@@ -170,10 +166,10 @@ const createProceduralTexture = (surface: "brass" | "black" | "terracotta" | "co
       data[i + 2] = val;
     }
     ctx.putImageData(imgData, 0, 0);
-    for (let k = 0; k < 75; k++) {
-      const rx = Math.random() * 256;
-      const ry = Math.random() * 256;
-      const rad = 5 + Math.random() * 10;
+    for (let k = 0; k < 30; k++) {
+      const rx = Math.random() * 128;
+      const ry = Math.random() * 128;
+      const rad = 3 + Math.random() * 6;
       const grad = ctx.createRadialGradient(rx, ry, 0, rx, ry, rad);
       grad.addColorStop(0, "rgba(70,70,70,0.18)");
       grad.addColorStop(0.5, "rgba(128,128,128,0.06)");
@@ -189,7 +185,6 @@ const createProceduralTexture = (surface: "brass" | "black" | "terracotta" | "co
     texture.repeat.set(2, 2);
     return texture;
   } else if (surface === "terracotta") {
-    // Sandy, porous clay texture
     for (let i = 0; i < data.length; i += 4) {
       const val = Math.max(0, Math.min(255, 128 + (Math.random() - 0.5) * 45));
       data[i] = val;
@@ -197,9 +192,8 @@ const createProceduralTexture = (surface: "brass" | "black" | "terracotta" | "co
       data[i + 2] = val;
     }
   } else {
-    // Copper: organic weathered waves
-    for (let y = 0; y < 256; y++) {
-      for (let x = 0; x < 256; x++) {
+    for (let y = 0; y < 128; y++) {
+      for (let x = 0; x < 128; x++) {
         const val = Math.max(
           0,
           Math.min(
@@ -210,7 +204,7 @@ const createProceduralTexture = (surface: "brass" | "black" | "terracotta" | "co
               (Math.random() - 0.5) * 8
           )
         );
-        const idx = (y * 256 + x) * 4;
+        const idx = (y * 128 + x) * 4;
         data[idx] = val;
         data[idx + 1] = val;
         data[idx + 2] = val;
@@ -223,7 +217,7 @@ const createProceduralTexture = (surface: "brass" | "black" | "terracotta" | "co
   const texture = new THREE.CanvasTexture(canvas);
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(1.5, 4.0); // stretched vertically
+  texture.repeat.set(1.5, 4.0);
   return texture;
 };
 
@@ -233,11 +227,17 @@ interface ConfiguratorCanvasProps {
   height: "low" | "mid" | "tall";
 }
 
-interface ConfiguratorRadiatorModelProps extends ConfiguratorCanvasProps {
-  isMobile?: boolean;
+interface SharedGeometries {
+  cylinder: THREE.CylinderGeometry;
+  sphere: THREE.SphereGeometry;
+  torus: THREE.TorusGeometry;
 }
 
-function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: ConfiguratorRadiatorModelProps) {
+interface ConfiguratorRadiatorModelProps extends ConfiguratorCanvasProps {
+  geoms: SharedGeometries;
+}
+
+function ConfiguratorRadiatorModel({ type, surface, height, geoms }: ConfiguratorRadiatorModelProps) {
   const groupRef = useRef<THREE.Group>(null);
   const heatLevel = useHeatStore((state) => state.heatLevel);
   const heatRatio = heatLevel / 100;
@@ -254,21 +254,21 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
     groupRef.current.rotation.z = THREE.MathUtils.lerp(groupRef.current.rotation.z, targetZ, 0.05);
   });
 
-  // Calculate geometry parameters based on height
+  // Calculate height params
   const heightMultiplier = useMemo(() => {
     switch (height) {
       case "low":
-        return 0.65; // ~1.5m
+        return 0.65;
       case "tall":
-        return 1.45; // ~3.3m
+        return 1.45;
       default:
-        return 1.0;  // ~2.2m
+        return 1.0;
     }
   }, [height]);
 
   const modelHeight = 2.4 * heightMultiplier;
 
-  // Calculate configuration geometries based on type
+  // Calculate configuration geometries
   const geometryConfig = useMemo(() => {
     switch (type) {
       case "tower":
@@ -283,7 +283,7 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
           spacing: 0.52,
           pipeRadius: 0.065,
         };
-      default: // classic
+      default:
         return {
           pipesCount: 8,
           spacing: 0.5,
@@ -296,33 +296,32 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
   const width = (pipesCount - 1) * spacing;
 
   // Horizontal pipe radius
-  const headerRadiusLeft = pipeRadius * 1.35;
-  const headerRadiusRight = pipeRadius * 1.75;
+  const headerRadius = pipeRadius * 1.5;
 
   // Materials Config based on Surface Coat Selection
   const surfaceConfig = useMemo(() => {
     switch (surface) {
       case "black":
         return {
-          color: "#1A1A1C", // Matte black iron
+          color: "#1A1A1C",
           metalness: 0.76,
           roughness: 0.65,
         };
       case "terracotta":
         return {
-          color: "#8D3E31", // Clay brick red
+          color: "#8D3E31",
           metalness: 0.15,
           roughness: 0.82,
         };
       case "copper":
         return {
-          color: "#B2694E", // Aged copper sheen
+          color: "#B2694E",
           metalness: 0.88,
           roughness: 0.35,
         };
-      default: // brass
+      default:
         return {
-          color: "#C3AC5B", // Brushed raw brass
+          color: "#C3AC5B",
           metalness: 0.9,
           roughness: 0.28,
         };
@@ -331,22 +330,26 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
 
   const { color, metalness, roughness } = surfaceConfig;
 
-  // Generate dynamic micro-bump texture based on surface
+  // Manage bump texture life cycle using useMemo and explicit unmount disposal to prevent leaks
   const bumpTexture = useMemo(() => {
     return createProceduralTexture(surface);
   }, [surface]);
 
+  useEffect(() => {
+    return () => {
+      if (bumpTexture) bumpTexture.dispose();
+    };
+  }, [bumpTexture]);
+
   const bumpScale = useMemo(() => {
     if (surface === "terracotta") return 0.015;
     if (surface === "black") return 0.025;
-    return 0.008; // brushed brass/copper
+    return 0.008;
   }, [surface]);
 
-  // Heat emissive glow (#FF6B35 direction)
   const emissiveColor = new THREE.Color("#FF6B35");
-  const emissiveIntensity = heatRatio * 1.35; // glowing embers
+  const emissiveIntensity = heatRatio * 1.35;
 
-  // Static imperfect offsets to maintain workshop sculpture aesthetics
   const pipeOffsets = useMemo(() => {
     const random = createPRNG(type.charCodeAt(0) + surface.charCodeAt(0) + height.charCodeAt(0));
     const offsets = [];
@@ -360,16 +363,18 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
     return offsets;
   }, [pipesCount, type, surface, height]);
 
-  // Color lerping with heat
   const currentColor = new THREE.Color(color).lerp(new THREE.Color("#C45C26"), heatRatio * 0.22);
   const currentRoughness = Math.max(0.15, roughness - heatRatio * 0.1);
 
-
   return (
     <group ref={groupRef}>
-      {/* 1. Upper Horizontal Pipe */}
-      <mesh position={[0, modelHeight / 2, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[headerRadiusLeft, headerRadiusRight, width + 0.35, isMobile ? 12 : 32]} />
+      {/* 1. Upper Horizontal Pipe - using shared scale */}
+      <mesh
+        geometry={geoms.cylinder}
+        position={[0, modelHeight / 2, 0]}
+        rotation={[0, 0, Math.PI / 2]}
+        scale={[headerRadius, width + 0.35, headerRadius]}
+      >
         <meshStandardMaterial
           color={currentColor}
           metalness={metalness}
@@ -381,8 +386,11 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
         />
       </mesh>
       {/* Capped upper end domes */}
-      <mesh position={[-width / 2 - 0.18, modelHeight / 2, 0]}>
-        <sphereGeometry args={[headerRadiusLeft, 12, 12]} />
+      <mesh
+        geometry={geoms.sphere}
+        position={[-width / 2 - 0.18, modelHeight / 2, 0]}
+        scale={[headerRadius, headerRadius, headerRadius]}
+      >
         <meshStandardMaterial
           color={currentColor}
           metalness={metalness}
@@ -393,8 +401,11 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
           bumpScale={bumpScale}
         />
       </mesh>
-      <mesh position={[width / 2 + 0.18, modelHeight / 2, 0]}>
-        <sphereGeometry args={[headerRadiusRight, 12, 12]} />
+      <mesh
+        geometry={geoms.sphere}
+        position={[width / 2 + 0.18, modelHeight / 2, 0]}
+        scale={[headerRadius, headerRadius, headerRadius]}
+      >
         <meshStandardMaterial
           color={currentColor}
           metalness={metalness}
@@ -407,8 +418,12 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
       </mesh>
 
       {/* 2. Lower Horizontal Pipe */}
-      <mesh position={[0, -modelHeight / 2, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[headerRadiusLeft, headerRadiusRight, width + 0.35, isMobile ? 12 : 32]} />
+      <mesh
+        geometry={geoms.cylinder}
+        position={[0, -modelHeight / 2, 0]}
+        rotation={[0, 0, Math.PI / 2]}
+        scale={[headerRadius, width + 0.35, headerRadius]}
+      >
         <meshStandardMaterial
           color={currentColor}
           metalness={metalness}
@@ -420,8 +435,11 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
         />
       </mesh>
       {/* Capped lower end domes */}
-      <mesh position={[-width / 2 - 0.18, -modelHeight / 2, 0]}>
-        <sphereGeometry args={[headerRadiusLeft, 12, 12]} />
+      <mesh
+        geometry={geoms.sphere}
+        position={[-width / 2 - 0.18, -modelHeight / 2, 0]}
+        scale={[headerRadius, headerRadius, headerRadius]}
+      >
         <meshStandardMaterial
           color={currentColor}
           metalness={metalness}
@@ -432,8 +450,11 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
           bumpScale={bumpScale}
         />
       </mesh>
-      <mesh position={[width / 2 + 0.18, -modelHeight / 2, 0]}>
-        <sphereGeometry args={[headerRadiusRight, 12, 12]} />
+      <mesh
+        geometry={geoms.sphere}
+        position={[width / 2 + 0.18, -modelHeight / 2, 0]}
+        scale={[headerRadius, headerRadius, headerRadius]}
+      >
         <meshStandardMaterial
           color={currentColor}
           metalness={metalness}
@@ -445,10 +466,13 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
         />
       </mesh>
 
-      {/* 3. Valve Detayı (On left side of lower pipe) */}
-      {/* Stem pipe */}
-      <mesh position={[-width / 2 - 0.28, -modelHeight / 2, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[pipeRadius * 0.6, pipeRadius * 0.6, 0.16, 12]} />
+      {/* 3. Valve Detayı */}
+      <mesh
+        geometry={geoms.cylinder}
+        position={[-width / 2 - 0.28, -modelHeight / 2, 0]}
+        rotation={[0, 0, Math.PI / 2]}
+        scale={[pipeRadius * 0.6, 0.16, pipeRadius * 0.6]}
+      >
         <meshStandardMaterial
           color={currentColor}
           metalness={metalness}
@@ -459,9 +483,11 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
           bumpScale={bumpScale}
         />
       </mesh>
-      {/* Valve connector spherical joint */}
-      <mesh position={[-width / 2 - 0.36, -modelHeight / 2, 0]}>
-        <sphereGeometry args={[pipeRadius * 1.1, 12, 12]} />
+      <mesh
+        geometry={geoms.sphere}
+        position={[-width / 2 - 0.36, -modelHeight / 2, 0]}
+        scale={[pipeRadius * 1.1, pipeRadius * 1.1, pipeRadius * 1.1]}
+      >
         <meshStandardMaterial
           color={currentColor}
           metalness={metalness}
@@ -472,9 +498,12 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
           bumpScale={bumpScale}
         />
       </mesh>
-      {/* Hand wheel handle dial */}
-      <mesh position={[-width / 2 - 0.36, -modelHeight / 2 + 0.12, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[pipeRadius * 1.5, pipeRadius * 0.38, 8, 20]} />
+      <mesh
+        geometry={geoms.torus}
+        position={[-width / 2 - 0.36, -modelHeight / 2 + 0.12, 0]}
+        rotation={[Math.PI / 2, 0, 0]}
+        scale={[pipeRadius * 1.5, pipeRadius * 1.5, pipeRadius * 1.5]}
+      >
         <meshStandardMaterial
           color={currentColor}
           metalness={metalness}
@@ -491,15 +520,16 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
         const offset = pipeOffsets[index];
         const posX = -width / 2 + index * spacing + offset.x;
 
-        // Wave depth offset
         const waveOffsetZ = type === "wave" ? Math.sin(index * 1.3) * 0.15 : 0;
         const posZ = offset.z + waveOffsetZ;
 
         return (
           <group key={index} position={[posX, 0, posZ]} rotation={[0, 0, offset.rotZ]}>
             {/* Column Tube */}
-            <mesh>
-              <cylinderGeometry args={[pipeRadius, pipeRadius, modelHeight - 0.1, isMobile ? 6 : 16]} />
+            <mesh
+              geometry={geoms.cylinder}
+              scale={[pipeRadius, modelHeight - 0.1, pipeRadius]}
+            >
               <meshStandardMaterial
                 color={currentColor}
                 metalness={metalness}
@@ -512,8 +542,12 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
             </mesh>
 
             {/* Torus Collar - Top Connection */}
-            <mesh position={[0, modelHeight / 2 - 0.05, 0]} rotation={[Math.PI / 2, 0, 0]}>
-              <torusGeometry args={[pipeRadius + 0.006, pipeRadius * 0.22, 8, 16]} />
+            <mesh
+              geometry={geoms.torus}
+              position={[0, modelHeight / 2 - 0.05, 0]}
+              rotation={[Math.PI / 2, 0, 0]}
+              scale={[pipeRadius + 0.006, pipeRadius + 0.006, pipeRadius + 0.006]}
+            >
               <meshStandardMaterial
                 color={currentColor}
                 metalness={metalness}
@@ -526,8 +560,12 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
             </mesh>
 
             {/* Torus Collar - Bottom Connection */}
-            <mesh position={[0, -modelHeight / 2 + 0.05, 0]} rotation={[Math.PI / 2, 0, 0]}>
-              <torusGeometry args={[pipeRadius + 0.006, pipeRadius * 0.22, 8, 16]} />
+            <mesh
+              geometry={geoms.torus}
+              position={[0, -modelHeight / 2 + 0.05, 0]}
+              rotation={[Math.PI / 2, 0, 0]}
+              scale={[pipeRadius + 0.006, pipeRadius + 0.006, pipeRadius + 0.006]}
+            >
               <meshStandardMaterial
                 color={currentColor}
                 metalness={metalness}
@@ -627,6 +665,25 @@ export default function ConfiguratorCanvas({ type, surface, height }: Configurat
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  // Shared geometry memory buffer initialization
+  const sharedGeoms = useMemo(() => {
+    const radialSegments = isMobile ? 12 : 24;
+    return {
+      cylinder: new THREE.CylinderGeometry(1, 1, 1, radialSegments),
+      sphere: new THREE.SphereGeometry(1, 12, 12),
+      torus: new THREE.TorusGeometry(1, 0.22, 6, 12),
+    };
+  }, [isMobile]);
+
+  // Clean up shared geometry buffers on unmount to prevent GPU memory leak
+  useEffect(() => {
+    return () => {
+      sharedGeoms.cylinder.dispose();
+      sharedGeoms.sphere.dispose();
+      sharedGeoms.torus.dispose();
+    };
+  }, [sharedGeoms]);
+
   const pointLightColor = useMemo(() => {
     const coolColor = new THREE.Color("#C45C26");
     const hotColor = new THREE.Color("#FF3B00");
@@ -657,7 +714,12 @@ export default function ConfiguratorCanvas({ type, surface, height }: Configurat
         <BackdropShimmer />
 
         <Center>
-          <ConfiguratorRadiatorModel type={type} surface={surface} height={height} isMobile={isMobile} />
+          <ConfiguratorRadiatorModel
+            type={type}
+            surface={surface}
+            height={height}
+            geoms={sharedGeoms}
+          />
         </Center>
 
         {/* Dynamic postprocessing glow */}
