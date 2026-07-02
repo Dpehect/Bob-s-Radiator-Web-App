@@ -10,6 +10,7 @@ import TheLivingKiln from "@/components/TheLivingKiln";
 import EmbersWall from "@/components/EmbersWall";
 import CustomCursor from "@/components/CustomCursor";
 import EasterEgg from "@/components/EasterEgg";
+import HeatHazeFilter from "@/components/HeatHazeFilter";
 import { useHeatStore } from "@/store/useHeatStore";
 
 export default function Home() {
@@ -61,6 +62,9 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen w-full flex flex-col items-center">
+      {/* Global Heat Haze SVG filter */}
+      <HeatHazeFilter />
+
       {/* 1. Micro-Details: Custom Cursor Trail */}
       <CustomCursor />
 

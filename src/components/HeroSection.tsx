@@ -92,7 +92,12 @@ export default function HeroSection() {
           onClick={() => increaseHeat(8)}
         >
           {/* 3D Canvas Box wrapper */}
-          <div className="w-full aspect-[4/3] max-w-[640px] border border-inherit/5 bg-black/10 relative group cursor-grab active:cursor-grabbing">
+          <div
+            className="w-full aspect-[4/3] max-w-[640px] border border-inherit/5 bg-black/10 relative group cursor-grab active:cursor-grabbing"
+            style={{
+              filter: heatLevel > 15 ? "url(#heat-haze-filter)" : "none",
+            }}
+          >
             
             {/* Subtle glow behind canvas */}
             <div

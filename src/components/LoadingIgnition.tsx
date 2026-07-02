@@ -6,7 +6,7 @@ import gsap from "gsap";
 
 export default function LoadingIgnition() {
   const setLoaded = useHeatStore((state) => state.setLoaded);
-  const setHeatLevel = useHeatStore((state) => state.setHeatLevel);
+  const updateGlobalHeat = useHeatStore((state) => state.updateGlobalHeat);
   const containerRef = useRef<HTMLDivElement>(null);
   const lineContainerRef = useRef<HTMLDivElement>(null);
   const lineColdRef = useRef<HTMLDivElement>(null);
@@ -114,7 +114,7 @@ export default function LoadingIgnition() {
               gsap.to({}, {
                 duration: 1,
                 onUpdate: function() {
-                  setHeatLevel(Math.round(this.progress() * 15)); // starts at 15% warmth
+                  updateGlobalHeat(Math.round(this.progress() * 15)); // starts at 15% warmth
                 }
               });
             }
@@ -187,7 +187,7 @@ export default function LoadingIgnition() {
       cancelAnimationFrame(animationFrameId);
       tl.kill();
     };
-  }, [setLoaded, setHeatLevel]);
+  }, [setLoaded, updateGlobalHeat]);
 
   if (ignitionComplete) return null;
 

@@ -61,6 +61,7 @@ export default function TheForge() {
   const yearRefs = useRef<(HTMLDivElement | null)[]>([]);
   
   const setForgeProgress = useHeatStore((state) => state.setForgeProgress);
+  const heatLevel = useHeatStore((state) => state.heatLevel);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -81,7 +82,7 @@ export default function TheForge() {
           
           // Slowly and dynamically increase global heatLevel (baseline starts at 15, goes to 55)
           const computedHeat = Math.min(100, Math.round(15 + self.progress * 40));
-          useHeatStore.getState().setHeatLevel(computedHeat);
+          useHeatStore.getState().updateGlobalHeat(computedHeat);
         },
       });
 
@@ -229,7 +230,12 @@ export default function TheForge() {
         {/* Right Column: 3D Radiator Scene (40% on Desktop) */}
         <div className="lg:col-span-5 h-[50vh] lg:h-[65vh] flex justify-center items-center relative">
           {/* Subtle glow border wrapper */}
-          <div className="w-full max-w-[480px] aspect-[4/3] border border-inherit/5 bg-black/10 relative rounded-none shadow-[inset_0_4px_30px_rgba(0,0,0,0.2)]">
+          <div
+            className="w-full max-w-[480px] aspect-[4/3] border border-inherit/5 bg-black/10 relative rounded-none shadow-[inset_0_4px_30px_rgba(0,0,0,0.2)]"
+            style={{
+              filter: heatLevel > 15 ? "url(#heat-haze-filter)" : "none",
+            }}
+          >
             
             {/* Morphing canvas component */}
             <ForgeRadiatorCanvas />

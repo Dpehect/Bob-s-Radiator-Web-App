@@ -16,7 +16,7 @@ const createPRNG = (seed: number) => {
   };
 };
 
-function ForgeRadiatorModel() {
+function ForgeRadiatorModel({ isMobile = false }: { isMobile?: boolean }) {
   const groupRef = useRef<THREE.Group>(null);
   const forgeProgress = useHeatStore((state) => state.forgeProgress);
   const heatLevel = useHeatStore((state) => state.heatLevel);
@@ -86,7 +86,7 @@ function ForgeRadiatorModel() {
     <group ref={groupRef}>
       {/* Upper Horizontal Pipe */}
       <mesh position={[0, 1.4, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[headerRadius, headerRadius, width + 0.4, 32]} />
+        <cylinderGeometry args={[headerRadius, headerRadius, width + 0.4, isMobile ? 12 : 32]} />
         <meshStandardMaterial
           color={currentColor}
           metalness={metalness}
@@ -98,7 +98,7 @@ function ForgeRadiatorModel() {
 
       {/* Lower Horizontal Pipe */}
       <mesh position={[0, -1.4, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[headerRadius, headerRadius, width + 0.4, 32]} />
+        <cylinderGeometry args={[headerRadius, headerRadius, width + 0.4, isMobile ? 12 : 32]} />
         <meshStandardMaterial
           color={currentColor}
           metalness={metalness}
@@ -122,7 +122,7 @@ function ForgeRadiatorModel() {
             rotation={[offset.rotX, 0, offset.rotZ]}
           >
             <mesh>
-              <cylinderGeometry args={[columnRadius, columnRadius, 2.7, 16]} />
+              <cylinderGeometry args={[columnRadius, columnRadius, 2.7, isMobile ? 6 : 16]} />
               <meshStandardMaterial
                 color={currentColor}
                 metalness={metalness}
@@ -138,7 +138,18 @@ function ForgeRadiatorModel() {
   );
 }
 
+import { useState, useEffect } from "react";
+
 export default function ForgeRadiatorCanvas() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   return (
     <div className="w-full h-full min-h-[450px] lg:min-h-[550px] relative select-none">
       <Canvas
@@ -158,18 +169,20 @@ export default function ForgeRadiatorCanvas() {
         <pointLight position={[0, 0, -2.5]} intensity={1.8} color="#C45C26" distance={7} />
 
         <Center>
-          <ForgeRadiatorModel />
+          <ForgeRadiatorModel isMobile={isMobile} />
         </Center>
 
-        {/* Dynamic Glow Bloom */}
-        <EffectComposer>
-          <Bloom
-            luminanceThreshold={0.25}
-            luminanceSmoothing={0.85}
-            height={300}
-            intensity={1.0}
-          />
-        </EffectComposer>
+        {/* Dynamic Glow Bloom - bypass on mobile for performance */}
+        {!isMobile && (
+          <EffectComposer>
+            <Bloom
+              luminanceThreshold={0.25}
+              luminanceSmoothing={0.85}
+              height={300}
+              intensity={1.0}
+            />
+          </EffectComposer>
+        )}
       </Canvas>
     </div>
   );

@@ -6,7 +6,7 @@ interface HeatState {
   isLoaded: boolean;
   forgeProgress: number; // 0 to 1 representing scroll in The Forge section
   logoClickCount: number; // logo clicks for easter egg
-  setHeatLevel: (level: number) => void;
+  updateGlobalHeat: (level: number) => void;
   increaseHeat: (amount: number) => void;
   setLoaded: (loaded: boolean) => void;
   setForgeProgress: (val: number) => void;
@@ -20,14 +20,20 @@ export const useHeatStore = create<HeatState>((set) => ({
   isLoaded: false,
   forgeProgress: 0,
   logoClickCount: 0,
-  setHeatLevel: (level) =>
+  updateGlobalHeat: (level) =>
     set(() => {
       const clamped = Math.max(0, Math.min(100, level));
+      if (typeof window !== "undefined") {
+        document.documentElement.style.setProperty("--heat-ratio", (clamped / 100).toString());
+      }
       return { heatLevel: clamped };
     }),
   increaseHeat: (amount) =>
     set((state) => {
       const nextLevel = Math.min(100, state.heatLevel + amount);
+      if (typeof window !== "undefined") {
+        document.documentElement.style.setProperty("--heat-ratio", (nextLevel / 100).toString());
+      }
       return {
         heatLevel: nextLevel,
         accumulatedHeat: state.accumulatedHeat + amount,

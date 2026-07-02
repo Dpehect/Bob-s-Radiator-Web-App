@@ -21,7 +21,7 @@ type RadHeight = "low" | "mid" | "tall";
 
 export default function TheLivingKiln() {
   const heatLevel = useHeatStore((state) => state.heatLevel);
-  const setHeatLevel = useHeatStore((state) => state.setHeatLevel);
+  const updateGlobalHeat = useHeatStore((state) => state.updateGlobalHeat);
 
   // Local configurator options
   const [type, setType] = useState<RadType>("classic");
@@ -332,7 +332,7 @@ export default function TheLivingKiln() {
                 min="0"
                 max="100"
                 value={heatLevel}
-                onChange={(e) => setHeatLevel(parseInt(e.target.value))}
+                onChange={(e) => updateGlobalHeat(parseInt(e.target.value))}
                 className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#C45C26] focus:outline-none"
                 style={{
                   backgroundImage: `linear-gradient(to right, #C45C26 0%, #C45C26 ${heatLevel}%, rgba(255,255,255,0.1) ${heatLevel}%, rgba(255,255,255,0.1) 100%)`,
@@ -365,7 +365,13 @@ export default function TheLivingKiln() {
           <div className="absolute bottom-0 right-0 w-3 h-3 border-b border-r border-white/20 z-10 pointer-events-none" />
 
           {/* Interactive R3F canvas wrapper */}
-          <div className="w-full h-full relative" data-cursor="3d">
+          <div
+            className="w-full h-full relative"
+            data-cursor="3d"
+            style={{
+              filter: heatLevel > 15 ? "url(#heat-haze-filter)" : "none",
+            }}
+          >
             <ConfiguratorCanvas type={type} surface={surface} height={height} />
           </div>
 

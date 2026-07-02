@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useMemo } from "react";
+import React, { useRef, useMemo, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Center } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
@@ -143,7 +143,11 @@ function ConfiguratorParticles({ count = 80 }) {
   );
 }
 
-function ConfiguratorRadiatorModel({ type, surface, height }: ConfiguratorCanvasProps) {
+interface ConfiguratorRadiatorModelProps extends ConfiguratorCanvasProps {
+  isMobile?: boolean;
+}
+
+function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: ConfiguratorRadiatorModelProps) {
   const groupRef = useRef<THREE.Group>(null);
   const heatLevel = useHeatStore((state) => state.heatLevel);
   const heatRatio = heatLevel / 100;
@@ -258,7 +262,7 @@ function ConfiguratorRadiatorModel({ type, surface, height }: ConfiguratorCanvas
     <group ref={groupRef}>
       {/* Upper Horizontal Pipe */}
       <mesh position={[0, modelHeight / 2, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[pipeRadius * 1.6, pipeRadius * 1.6, width + 0.35, 32]} />
+        <cylinderGeometry args={[pipeRadius * 1.6, pipeRadius * 1.6, width + 0.35, isMobile ? 12 : 32]} />
         <meshStandardMaterial
           color={currentColor}
           metalness={metalness}
@@ -270,7 +274,7 @@ function ConfiguratorRadiatorModel({ type, surface, height }: ConfiguratorCanvas
 
       {/* Lower Horizontal Pipe */}
       <mesh position={[0, -modelHeight / 2, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[pipeRadius * 1.6, pipeRadius * 1.6, width + 0.35, 32]} />
+        <cylinderGeometry args={[pipeRadius * 1.6, pipeRadius * 1.6, width + 0.35, isMobile ? 12 : 32]} />
         <meshStandardMaterial
           color={currentColor}
           metalness={metalness}
@@ -292,7 +296,7 @@ function ConfiguratorRadiatorModel({ type, surface, height }: ConfiguratorCanvas
         return (
           <group key={index} position={[posX, 0, posZ]} rotation={[0, 0, offset.rotZ]}>
             <mesh>
-              <cylinderGeometry args={[pipeRadius, pipeRadius, modelHeight - 0.1, 16]} />
+              <cylinderGeometry args={[pipeRadius, pipeRadius, modelHeight - 0.1, isMobile ? 6 : 16]} />
               <meshStandardMaterial
                 color={currentColor}
                 metalness={metalness}
@@ -360,6 +364,15 @@ export default function ConfiguratorCanvas({ type, surface, height }: Configurat
   // Scale bloom intensity with dynamic heat level
   const bloomIntensity = 0.6 + heatRatio * 1.5;
 
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   return (
     <div className="w-full h-full min-h-[500px] relative select-none">
       <Canvas
@@ -381,20 +394,23 @@ export default function ConfiguratorCanvas({ type, surface, height }: Configurat
         <RoomEnvironment />
 
         <Center>
-          <ConfiguratorRadiatorModel type={type} surface={surface} height={height} />
+          <ConfiguratorRadiatorModel type={type} surface={surface} height={height} isMobile={isMobile} />
         </Center>
 
         {/* Dynamic postprocessing glow */}
-        <ConfiguratorParticles count={70} />
+        <ConfiguratorParticles count={isMobile ? 25 : 70} />
 
-        <EffectComposer>
-          <Bloom
-            luminanceThreshold={0.25}
-            luminanceSmoothing={0.8}
-            height={300}
-            intensity={bloomIntensity}
-          />
-        </EffectComposer>
+        {/* Bypass bloom on mobile for performance */}
+        {!isMobile && (
+          <EffectComposer>
+            <Bloom
+              luminanceThreshold={0.25}
+              luminanceSmoothing={0.8}
+              height={300}
+              intensity={bloomIntensity}
+            />
+          </EffectComposer>
+        )}
       </Canvas>
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useMemo } from "react";
+import React, { useRef, useMemo, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Center } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
@@ -146,7 +146,7 @@ function HeatParticles({ count = 35 }) {
   );
 }
 
-function RadiatorModel() {
+function RadiatorModel({ isMobile = false }: { isMobile?: boolean }) {
   const groupRef = useRef<THREE.Group>(null);
   const heatLevel = useHeatStore((state) => state.heatLevel);
   const heatRatio = heatLevel / 100;
@@ -205,7 +205,7 @@ function RadiatorModel() {
     <group ref={groupRef}>
       {/* 1. Header Tube (Upper Horizontal Pipe) */}
       <mesh position={[0, 1.45, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.13, 0.13, width + 0.5, 32]} />
+        <cylinderGeometry args={[0.13, 0.13, width + 0.5, isMobile ? 12 : 32]} />
         <meshStandardMaterial
           metalness={0.82}
           roughness={0.38}
@@ -217,7 +217,7 @@ function RadiatorModel() {
 
       {/* 2. Footer Tube (Lower Horizontal Pipe) */}
       <mesh position={[0, -1.45, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.13, 0.13, width + 0.5, 32]} />
+        <cylinderGeometry args={[0.13, 0.13, width + 0.5, isMobile ? 12 : 32]} />
         <meshStandardMaterial
           metalness={0.82}
           roughness={0.38}
@@ -240,7 +240,7 @@ function RadiatorModel() {
             rotation={[offset.rotX, 0, offset.rotZ]}
           >
             <mesh>
-              <cylinderGeometry args={[0.075, 0.075, 2.8, 16]} />
+              <cylinderGeometry args={[0.075, 0.075, 2.8, isMobile ? 6 : 16]} />
               <meshStandardMaterial
                 metalness={0.82}
                 roughness={0.38}
@@ -254,12 +254,21 @@ function RadiatorModel() {
       })}
 
       {/* 4. Rising Heat Particles enclosing the model */}
-      <HeatParticles count={40} />
+      <HeatParticles count={isMobile ? 15 : 40} />
     </group>
   );
 }
 
 export default function RadiatorCanvas() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   return (
     <div className="w-full h-full min-h-[500px] md:min-h-[600px] relative select-none">
       <Canvas
@@ -277,18 +286,20 @@ export default function RadiatorCanvas() {
         <pointLight position={[0, 0, -2]} intensity={2.0} color="#C45C26" distance={8} />
 
         <Center>
-          <RadiatorModel />
+          <RadiatorModel isMobile={isMobile} />
         </Center>
 
-        {/* Dynamic postprocessing glow */}
-        <EffectComposer>
-          <Bloom
-            luminanceThreshold={0.2}
-            luminanceSmoothing={0.9}
-            height={300}
-            intensity={1.2}
-          />
-        </EffectComposer>
+        {/* Dynamic postprocessing glow - bypass on mobile for performance */}
+        {!isMobile && (
+          <EffectComposer>
+            <Bloom
+              luminanceThreshold={0.2}
+              luminanceSmoothing={0.9}
+              height={300}
+              intensity={1.2}
+            />
+          </EffectComposer>
+        )}
       </Canvas>
     </div>
   );
