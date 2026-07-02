@@ -197,7 +197,7 @@ export default function EasterEgg() {
               transition={{ delay: 0.6, duration: 0.7 }}
               className="font-sans text-[9px] tracking-[0.35em] uppercase text-[#C45C26] font-semibold mb-4"
             >
-              Mirasın Kurucusu
+              The Founder
             </motion.span>
 
             <motion.p
@@ -206,8 +206,8 @@ export default function EasterEgg() {
               transition={{ delay: 0.75, duration: 0.9, ease: [0.25, 1, 0.5, 1] }}
               className="font-serif text-xl text-white/80 leading-relaxed italic mb-6 font-light"
             >
-              &ldquo;Demir soğuktur evlat, ama hafızası vardır. Ona verdiğin her derece ısıyı,
-              o da sana bir hikâye olarak geri fısıldar.&rdquo;
+              &ldquo;Iron is cold, my son, but it remembers. Every degree of heat you give it,
+              it whispers back to you as a story.&rdquo;
             </motion.p>
 
             <motion.div

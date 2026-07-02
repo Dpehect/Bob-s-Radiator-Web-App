@@ -30,30 +30,30 @@ interface SavedDesign {
 const PRESET_DESIGNS: SavedDesign[] = [
   {
     id: "preset-1",
-    name: "Bob (Kurucu)",
+    name: "Bob (Founder)",
     type: "classic",
     surface: "black",
     height: "mid",
     heatLevel: 82,
-    timestamp: "12.11.1952",
+    timestamp: "11/12/1952",
   },
   {
     id: "preset-2",
-    name: "Mimar Selim",
+    name: "Architect Selim",
     type: "tower",
     surface: "brass",
     height: "tall",
     heatLevel: 65,
-    timestamp: "14.04.2024",
+    timestamp: "04/14/2024",
   },
   {
     id: "preset-3",
-    name: "Karaköy Restorasyon",
+    name: "Karaköy Restoration",
     type: "wave",
     surface: "copper",
     height: "low",
     heatLevel: 45,
-    timestamp: "28.09.2025",
+    timestamp: "09/28/2025",
   },
 ];
 
@@ -87,18 +87,18 @@ export default function EmbersWall() {
 
   const getSurfaceLabel = (s: string) => {
     switch (s) {
-      case "brass": return "Ham Pirinç";
-      case "black": return "Mat Siyah Demir";
-      case "terracotta": return "Kızıl Toprak";
-      default: return "Eskimiş Bakır";
+      case "brass": return "Raw Brass";
+      case "black": return "Matte Cast Iron";
+      case "terracotta": return "Red Earth";
+      default: return "Aged Copper";
     }
   };
 
   const getTypeLabel = (t: string) => {
     switch (t) {
-      case "wave": return "Dalga Gövde";
-      case "tower": return "İnce Dikey Kolon";
-      default: return "Klasik Atölye";
+      case "wave": return "Wave Body";
+      case "tower": return "Slim Vertical Column";
+      default: return "Classic Workshop";
     }
   };
 
@@ -118,14 +118,14 @@ export default function EmbersWall() {
       {/* Header */}
       <div className="w-full max-w-7xl mx-auto px-6 md:px-12 flex flex-col items-start mb-16 relative z-10">
         <span className="font-sans text-[10px] tracking-[0.3em] uppercase text-[#C45C26] font-semibold mb-3">
-          Miras Galerisi
+          Heritage Gallery
         </span>
         <h2 className="font-serif text-5xl md:text-7xl font-bold tracking-tight text-white mb-4">
-          Bırakılan Isılar
+          Heats Left Behind
         </h2>
         <p className="font-sans text-sm md:text-base text-white/50 font-light leading-relaxed max-w-xl">
-          Ziyaretçiler ve ustalar tarafından dökümhanemize bırakılan özgün konfigürasyonlar. 
-          Her kart geçmişte yakılmış bir ateşi taşır. Kartları inceleyerek 3D detaylarını görebilirsiniz.
+          Original configurations left at our foundry by visitors and craftsmen.
+          Every card carries a fire once lit. Browse them and click to see the 3D detail.
         </p>
       </div>
 
@@ -170,7 +170,7 @@ export default function EmbersWall() {
                 </h4>
                 
                 <span className="font-sans text-xs text-white/50 mt-1.5 font-light">
-                  {getSurfaceLabel(design.surface)} • {design.height === "low" ? "Alçak" : design.height === "tall" ? "Yüksek" : "Standart"}
+                  {getSurfaceLabel(design.surface)} • {design.height === "low" ? "Low" : design.height === "tall" ? "Tall" : "Standard"}
                 </span>
               </div>
 
@@ -236,7 +236,7 @@ export default function EmbersWall() {
               <div className="p-8 md:p-10 flex flex-col justify-between border-r border-white/5 select-none">
                 <div className="flex flex-col items-start w-full">
                   <span className="font-sans text-[9px] tracking-[0.25em] uppercase text-[#C45C26] font-semibold mb-3">
-                    Miras Tasarımı
+                    Heritage Design
                   </span>
                   
                   <h3 className="font-serif text-3xl font-bold text-white mb-2 leading-tight">
@@ -244,22 +244,22 @@ export default function EmbersWall() {
                   </h3>
                   
                   <p className="font-sans text-xs text-white/40 mb-6">
-                    {activePreview.timestamp} tarihinde {activePreview.name} tarafından ateşlendi.
+                    Ignited by {activePreview.name} on {activePreview.timestamp}.
                   </p>
 
                   <div className="w-full border-t border-white/5 pt-6 flex flex-col gap-4">
                     <div className="flex justify-between items-center text-xs py-1">
-                      <span className="font-sans text-[9px] tracking-[0.2em] uppercase text-white/40">Tasarımcı</span>
+                      <span className="font-sans text-[9px] tracking-[0.2em] uppercase text-white/40">Designer</span>
                       <span className="font-serif text-sm font-medium text-white">{activePreview.name}</span>
                     </div>
                     <div className="flex justify-between items-center text-xs py-1 border-t border-white/5">
-                      <span className="font-sans text-[9px] tracking-[0.2em] uppercase text-white/40">Yüzey Doku</span>
+                      <span className="font-sans text-[9px] tracking-[0.2em] uppercase text-white/40">Surface</span>
                       <span className="font-serif text-sm font-medium text-white">{getSurfaceLabel(activePreview.surface)}</span>
                     </div>
                     <div className="flex justify-between items-center text-xs py-1 border-t border-white/5">
-                      <span className="font-sans text-[9px] tracking-[0.2em] uppercase text-white/40">Boyut</span>
+                      <span className="font-sans text-[9px] tracking-[0.2em] uppercase text-white/40">Size</span>
                       <span className="font-serif text-sm font-medium text-white">
-                        {activePreview.height === "low" ? "1.5 Metre (Alçak)" : activePreview.height === "tall" ? "3.3 Metre (Yüksek)" : "2.2 Metre (Standart)"}
+                        {activePreview.height === "low" ? "1.5 Metres (Low)" : activePreview.height === "tall" ? "3.3 Metres (Tall)" : "2.2 Metres (Standard)"}
                       </span>
                     </div>
                   </div>
@@ -267,7 +267,7 @@ export default function EmbersWall() {
 
                 <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between">
                   <span className="font-sans text-[10px] tracking-[0.2em] uppercase text-white/40 flex items-center gap-1">
-                    <Flame size={12} className="text-[#C45C26]" /> Isı Enerjisi
+                    <Flame size={12} className="text-[#C45C26]" /> Heat Energy
                   </span>
                   <span className="font-serif text-2xl font-bold text-[#C45C26]">
                     {activePreview.heatLevel}°C

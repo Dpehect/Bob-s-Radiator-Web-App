@@ -180,7 +180,7 @@ export default function HeroSection() {
             transition={{ duration: 1.2, ease: [0.25, 1, 0.5, 1], delay: 1.0 }}
             className="font-serif text-xl sm:text-2xl italic leading-relaxed text-inherit/80 max-w-md font-light"
           >
-            1952&apos;den beri aynı ateşi taşıyoruz. Sen de dokun.
+            Carrying the same fire since 1952. Come, touch it.
           </motion.p>
 
           {/* Heat level indicator strip */}
@@ -254,7 +254,7 @@ export default function HeroSection() {
 
             {/* Hint */}
             <div className="absolute bottom-4 right-4 text-[9px] font-sans tracking-[0.2em] uppercase text-inherit/30 pointer-events-none group-hover:text-inherit/55 transition-colors duration-300">
-              Dokunarak Besle (+8°)
+              Touch to Feed (+8°)
             </div>
           </div>
         </motion.div>
@@ -319,7 +319,7 @@ export default function HeroSection() {
           onClick={() => window.scrollTo({ top: window.innerHeight, behavior: "smooth" })}
           className="group flex flex-col items-center gap-2 text-inherit/50 hover:text-inherit transition-colors duration-300 font-sans text-[10px] tracking-[0.25em] uppercase bg-transparent border-none cursor-pointer"
         >
-          <span>Ateşi beslemeye başla</span>
+          <span>Start feeding the fire</span>
           <ChevronDown
             size={14}
             className="animate-bounce text-[#C45C26] mt-1 group-hover:translate-y-1 transition-transform duration-300"

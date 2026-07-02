@@ -20,22 +20,22 @@ type RadSurface = "brass" | "black" | "terracotta" | "copper";
 type RadHeight = "low" | "mid" | "tall";
 
 const TYPE_LABELS: Record<RadType, { name: string; desc: string }> = {
-  classic: { name: "Klasik", desc: "Atölye döküm" },
-  wave: { name: "Dalga", desc: "Organik form" },
-  tower: { name: "Kule", desc: "İnce dikey" },
+  classic: { name: "Classic", desc: "Foundry cast" },
+  wave: { name: "Wave", desc: "Organic form" },
+  tower: { name: "Tower", desc: "Slim vertical" },
 };
 
 const SURFACE_LABELS: Record<RadSurface, { name: string; hex: string }> = {
-  brass: { name: "Ham Pirinç", hex: "#C3AC5B" },
-  black: { name: "Mat Siyah Demir", hex: "#202022" },
-  terracotta: { name: "Kızıl Toprak", hex: "#8D3E31" },
-  copper: { name: "Eskimiş Bakır", hex: "#B2694E" },
+  brass: { name: "Raw Brass", hex: "#C3AC5B" },
+  black: { name: "Matte Cast Iron", hex: "#202022" },
+  terracotta: { name: "Red Earth", hex: "#8D3E31" },
+  copper: { name: "Aged Copper", hex: "#B2694E" },
 };
 
 const HEIGHT_LABELS: Record<RadHeight, { name: string; sub: string }> = {
-  low: { name: "1.5m", sub: "Alçak" },
-  mid: { name: "2.2m", sub: "Standart" },
-  tall: { name: "3.3m", sub: "Yüksek" },
+  low: { name: "1.5m", sub: "Low" },
+  mid: { name: "2.2m", sub: "Standard" },
+  tall: { name: "3.3m", sub: "Tall" },
 };
 
 // Luxurious selector button with hover micro-animation
@@ -173,7 +173,7 @@ export default function TheLivingKiln() {
       ctx.fillStyle = "#3D2B1F";
       ctx.font = "500 18px sans-serif";
       ctx.letterSpacing = "0.35em";
-      ctx.fillText("BOB'S RADIATOR  ·  EST 1952  ·  KARAKÖY, İSTANBUL", canvas.width / 2, 112);
+      ctx.fillText("BOB'S RADIATOR  ·  EST 1952  ·  KARAKÖY, ISTANBUL", canvas.width / 2, 112);
 
       // Thin horizontal rule
       ctx.beginPath();
@@ -185,7 +185,7 @@ export default function TheLivingKiln() {
       ctx.font = "italic bold 76px serif";
       ctx.fillStyle = "#C45C26";
       ctx.letterSpacing = "-0.01em";
-      ctx.fillText("Isı ve Miras Sertifikası", canvas.width / 2, 240);
+      ctx.fillText("Heat & Heritage Certificate", canvas.width / 2, 240);
 
       // Number label
       const certNumber = `#${String(Math.floor(Math.random() * 90000 + 10000))}`;
@@ -199,11 +199,11 @@ export default function TheLivingKiln() {
       ctx.fillStyle = "#3D2B1F";
       ctx.letterSpacing = "0.01em";
       ctx.fillText(
-        "Bu vesile ile Bob'un dökümhanesinden çıkan, aşağıda tasarım parametreleri",
+        "This certifies that the original thermal sculpture described below, cast from",
         canvas.width / 2, 340
       );
       ctx.fillText(
-        "belirtilen termal heykelin özgün tasarımı tescil ve tescil edilmiştir.",
+        "Bob's foundry moulds and registered with unique specifications, is hereby verified.",
         canvas.width / 2, 375
       );
 
@@ -220,15 +220,15 @@ export default function TheLivingKiln() {
       ctx.font = "400 16px sans-serif";
       ctx.fillStyle = "rgba(28,24,20,0.45)";
       ctx.letterSpacing = "0.25em";
-      ctx.fillText("TASARIMCI · KALORIFER ORTAĞI", canvas.width / 2, 518);
+      ctx.fillText("DESIGNER · HEAT PARTNER", canvas.width / 2, 518);
 
       // ── 8. Specification Grid ─────────────────────────────────────────────
       const specY = 600;
       const cols = [
-        { label: "YAPI MODELİ", value: TYPE_LABELS[type].name + " — " + TYPE_LABELS[type].desc },
-        { label: "YÜZEY DOKUSU", value: SURFACE_LABELS[surface].name },
-        { label: "HEYKEL BOYUTU", value: HEIGHT_LABELS[height].name + " (" + HEIGHT_LABELS[height].sub + ")" },
-        { label: "ENERJİ İNDEKSİ", value: `${heatLevel}° ısı` },
+        { label: "BODY MODEL", value: TYPE_LABELS[type].name + " — " + TYPE_LABELS[type].desc },
+        { label: "SURFACE FINISH", value: SURFACE_LABELS[surface].name },
+        { label: "SCULPTURE SIZE", value: HEIGHT_LABELS[height].name + " (" + HEIGHT_LABELS[height].sub + ")" },
+        { label: "HEAT INDEX", value: `${heatLevel}° heat` },
       ];
 
       const colW = canvas.width / 4;
@@ -286,18 +286,18 @@ export default function TheLivingKiln() {
       ctx.fillText("RADIATOR", stampX, stampY + 8);
       ctx.font = "10px sans-serif";
       ctx.fillStyle = "rgba(196,92,38,0.65)";
-      ctx.fillText("MIRAS 1952", stampX, stampY + 26);
+      ctx.fillText("HERITAGE 1952", stampX, stampY + 26);
 
       // ── 10. Footer Date ───────────────────────────────────────────────────
       ctx.font = "400 13px sans-serif";
       ctx.fillStyle = "rgba(28,24,20,0.3)";
       ctx.letterSpacing = "0.12em";
-      ctx.fillText(new Date().toLocaleDateString("tr-TR", { year: "numeric", month: "long", day: "numeric" }), canvas.width / 2, canvas.height - 56);
+      ctx.fillText(new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }), canvas.width / 2, canvas.height - 56);
 
       // ── Trigger Download ──────────────────────────────────────────────────
       const dataURL = canvas.toDataURL("image/png");
       const link = document.createElement("a");
-      link.download = `Bob_Radiator_Sertifika_${designerName.replace(/\s+/g, "_")}.png`;
+      link.download = `Bob_Radiator_Certificate_${designerName.replace(/\s+/g, "_")}.png`;
       link.href = dataURL;
       link.click();
 
@@ -306,7 +306,7 @@ export default function TheLivingKiln() {
         id: Date.now().toString(),
         name: designerName,
         type, surface, height, heatLevel,
-        timestamp: new Date().toLocaleDateString("tr-TR"),
+        timestamp: new Date().toLocaleDateString("en-US"),
       };
       const existing = localStorage.getItem("bobs_embers");
       const list = existing ? JSON.parse(existing) : [];
@@ -347,7 +347,7 @@ export default function TheLivingKiln() {
           transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1] }}
           className="font-sans text-[10px] tracking-[0.35em] uppercase text-[#C45C26] font-semibold mb-4"
         >
-          Configurator — Kendi Ateşini Yak
+          Configurator — Light Your Own Fire
         </motion.span>
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
@@ -356,8 +356,8 @@ export default function TheLivingKiln() {
           transition={{ duration: 1.0, ease: [0.25, 1, 0.5, 1], delay: 0.1 }}
           className="heading-dynamic font-serif text-5xl md:text-7xl font-bold tracking-tight text-white mb-5"
         >
-          Isı Senin
-          <span className="text-[#C45C26]"> Elinde</span>
+          Heat is in
+          <span className="text-[#C45C26]"> Your Hands</span>
         </motion.h2>
         <motion.p
           initial={{ opacity: 0, y: 12 }}
@@ -366,8 +366,8 @@ export default function TheLivingKiln() {
           transition={{ duration: 0.9, ease: [0.25, 1, 0.5, 1], delay: 0.2 }}
           className="font-sans text-sm md:text-base text-white/45 font-light leading-relaxed max-w-lg"
         >
-          Atölye döküm kalıplarını seç. Metalin dokusuna ve yüksekliğine karar ver.
-          Isı kadranıyla metali ateşle. Bu tasarımı Bob&apos;un mirasına yaz.
+          Choose your foundry casting mould, decide on the metal&apos;s finish and height.
+          Turn up the heat dial, fire the metal — and inscribe this design into Bob&apos;s legacy.
         </motion.p>
       </div>
 
@@ -397,7 +397,7 @@ export default function TheLivingKiln() {
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <span className="font-sans text-[9px] tracking-[0.28em] uppercase text-white/35">
-                  01 — Radyatör Tipi
+                  01 — Body Type
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-2">
@@ -413,7 +413,7 @@ export default function TheLivingKiln() {
             {/* 2. Surface */}
             <div>
               <span className="font-sans text-[9px] tracking-[0.28em] uppercase text-white/35 block mb-3">
-                02 — Yüzey Dokusu
+                02 — Surface Finish
               </span>
               <div className="grid grid-cols-2 gap-2">
                 {(Object.entries(SURFACE_LABELS) as [RadSurface, { name: string; hex: string }][]).map(([s, lbl]) => (
@@ -427,7 +427,7 @@ export default function TheLivingKiln() {
             {/* 3. Height */}
             <div>
               <span className="font-sans text-[9px] tracking-[0.28em] uppercase text-white/35 block mb-3">
-                03 — Yükseklik
+                03 — Height
               </span>
               <div className="grid grid-cols-3 gap-2">
                 {(Object.entries(HEIGHT_LABELS) as [RadHeight, { name: string; sub: string }][]).map(([h, lbl]) => (
@@ -444,7 +444,7 @@ export default function TheLivingKiln() {
               <div className="flex items-center justify-between mb-4">
                 <span className="font-sans text-[9px] tracking-[0.28em] uppercase text-white/35 flex items-center gap-1.5">
                   <Flame size={10} className="text-[#C45C26]" />
-                  04 — Isı Derecesi
+                  04 — Heat Intensity
                 </span>
                 <motion.span
                   key={heatLevel}
@@ -482,7 +482,7 @@ export default function TheLivingKiln() {
 
               {/* Heat description */}
               <p className="font-sans text-[9px] text-white/25 italic mt-2.5 leading-relaxed">
-                Isı arttıkça bloom parlaması, yükselen partiküller ve sahne aurası kızıllaşır. Siteyi ısıt.
+                Heat rises with bloom intensity, ascending particles and room aura redness.
               </p>
             </div>
 
@@ -501,7 +501,7 @@ export default function TheLivingKiln() {
             <span className="absolute inset-0 bg-[#C45C26] origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]" />
             <span className="relative flex items-center justify-center gap-2.5 font-sans text-xs tracking-[0.22em] uppercase text-[#C45C26] group-hover:text-[#F3ECE6] font-semibold transition-colors duration-300">
               <Sparkles size={13} />
-              Bu Tasarımı Mirasa Ekle
+              Inscribe This Design into the Legacy
             </span>
           </motion.button>
         </motion.div>
@@ -536,14 +536,14 @@ export default function TheLivingKiln() {
 
           {/* Studio label */}
           <div className="absolute bottom-4 left-4 text-[8px] font-sans tracking-[0.28em] uppercase text-white/25 pointer-events-none z-10">
-            Döküm Stüdyosu — İncele & Çevir
+            Foundry Studio — Explore & Rotate
           </div>
           {/* Heat indicator */}
           <div
             className="absolute bottom-4 right-4 text-[8px] font-sans tracking-[0.2em] uppercase pointer-events-none z-10 transition-all duration-500"
             style={{ color: `rgba(196, 92, 38, ${0.3 + heatLevel * 0.007})` }}
           >
-            {heatLevel}° aktif
+            {heatLevel}° active
           </div>
         </motion.div>
       </div>
@@ -580,7 +580,7 @@ export default function TheLivingKiln() {
                 className="absolute top-5 right-5 text-[9px] tracking-[0.2em] uppercase text-white/30 hover:text-white/70 transition-colors cursor-pointer"
                 disabled={isGenerating}
               >
-                Kapat
+                Close
               </button>
 
               <AnimatePresence mode="wait">
@@ -593,20 +593,20 @@ export default function TheLivingKiln() {
                     transition={{ duration: 0.2 }}
                   >
                     <span className="font-sans text-[9px] tracking-[0.3em] uppercase text-[#C45C26] block mb-4">
-                      Tescil & Miras
+                      Registration & Legacy
                     </span>
                     <h4 className="font-serif text-2xl font-bold mb-3 text-white">
-                      Miras Sertifikası
+                      Heritage Certificate
                     </h4>
                     <p className="font-sans text-xs text-white/50 leading-relaxed mb-7 font-light">
-                      Radyatörünüzün özgün tasarım sertifikası için atölye imzanızı belirtin.
-                      Bu tasarım Bob&apos;un dijital mirasına eklenecek.
+                      Enter your name or workshop signature for the certificate.
+                      This design will be added to Bob&apos;s digital legacy.
                     </p>
 
                     <input
                       type="text"
                       maxLength={30}
-                      placeholder="Tasarımcı Adı veya Atölye İmzası"
+                      placeholder="Designer Name or Workshop Signature"
                       value={designerName}
                       onChange={(e) => setDesignerName(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleGenerateCertificate()}
@@ -625,12 +625,12 @@ export default function TheLivingKiln() {
                       {isGenerating ? (
                         <>
                           <RefreshCw size={12} className="animate-spin" />
-                          Sertifika Basılıyor...
+                          Printing Certificate...
                         </>
                       ) : (
                         <>
                           <Download size={12} />
-                          Sertifikayı Bas ve Mirası Kaydet
+                          Print Certificate & Save Legacy
                         </>
                       )}
                     </motion.button>
@@ -651,9 +651,9 @@ export default function TheLivingKiln() {
                     >
                       <Check size={22} />
                     </motion.div>
-                    <h5 className="font-serif text-xl font-bold text-white mb-2">Tescil Başarılı</h5>
+                    <h5 className="font-serif text-xl font-bold text-white mb-2">Registration Successful</h5>
                     <p className="font-sans text-xs text-white/45 font-light">
-                      Sertifikanız indirildi ve tasarımınız &ldquo;Embers&rdquo; duvarına eklendi.
+                      Your certificate has been downloaded and your design added to the &ldquo;Embers&rdquo; wall.
                     </p>
                   </motion.div>
                 )}

@@ -36,53 +36,53 @@ interface ArchiveCardData {
 const CARDS_DATA: ArchiveCardData[] = [
   {
     type: "kulyutan",
-    title: "Kül Yutan",
-    subtitle: "Kömür tozu ve kaba döküm.",
-    description: "Soba küllerini yutan atölyenin en kaba eseri. Kalın döküm demir gövde.",
-    story: "1952 kışında Karaköy limanında bir dökümhaneden kalan kömür cürufları Bob'un elinde eridi. Kül Yutan, isli havası ve devasa kütlesiyle Bob'un ürettiği en sert, en kaba ama ısıyı en sadık tutan parçadır.",
-    spec: "Gri Dökme Demir Alaşım (Ham)",
+    title: "Ash Eater",
+    subtitle: "Coal dust and raw cast iron.",
+    description: "The workshop's roughest piece — a thick-walled cast iron body that swallows soot and breathes heat for hours.",
+    story: "In the winter of 1952, coal slag left behind by a Karaköy foundry melted in Bob's hands. Ash Eater — smoky, massive, relentless — remains the most brutally honest sculpture Bob ever forged.",
+    spec: "Grey Cast Iron Alloy (Raw)",
     weight: "142 kg",
-    bobsNote: "Bu parça ateşi yutar, saatlerce bırakmaz. Onunla konuşurken sesiniz yankılanır.",
+    bobsNote: "This piece swallows fire and refuses to let go. Speak near it and your voice will echo back.",
   },
   {
     type: "fisilti",
-    title: "Fısıltı",
-    subtitle: "Zarif gümüş kolonlar.",
-    description: "Zarif, incecik gövdesiyle havayı sessizce ısıtan endüstriyel şiir.",
-    story: "Metal fısıldar mı? Bob bu modeli tasarlarken boruların içindeki suyun sesini dinledi. İnce alaşımlı gümüş-nikel borular, genleşirken tıpkı rüzgarın fısıltısı gibi hafif melodiler çıkarır.",
-    spec: "Nikel-Gümüş Alaşım (Saten)",
+    title: "Whisper",
+    subtitle: "Elegant silver columns.",
+    description: "Industrial poetry — a gossamer body that silently warms the air without ever announcing itself.",
+    story: "Can metal whisper? While designing this model, Bob listened to the water moving inside the pipes. The thin nickel-silver tubes expand with a sound not unlike wind threading through old timber.",
+    spec: "Nickel-Silver Alloy (Satin)",
     weight: "38 kg",
-    bobsNote: "Sessiz salonlar için. Genleşme sesi o kadar narindir ki, sadece gece yarısı duyulabilir.",
+    bobsNote: "Made for quiet rooms. The expansion sound is so delicate it can only be heard past midnight.",
   },
   {
     type: "kalitim",
-    title: "Kalıtım",
-    subtitle: "Fırınlanmış saf bakır.",
-    description: "Bob'un babasından kalan döküm teknikleriyle şekillenen bakır başyapıt.",
-    story: "Bob, babasının döküm kalıplarını bulduğunda yıl 1987'ydi. O kalıpları modern ısı kanallarıyla birleştirerek bakır alaşımlı bu efsanevi ısı anıtını yarattı. Kalıtım, geçmişin döküm ağırlığını taşır.",
-    spec: "Oksitlenmiş Elektrolitik Bakır",
+    title: "Inheritance",
+    subtitle: "Kiln-fired pure copper.",
+    description: "A copper masterpiece shaped by casting techniques passed down from Bob's father.",
+    story: "It was 1987 when Bob found his father's casting moulds. He married them to modern heat channels, producing this legendary copper thermal monument. Inheritance carries the foundry weight of the past.",
+    spec: "Oxidised Electrolytic Copper",
     weight: "84 kg",
-    bobsNote: "Bu radyatör bir aile yadigarı gibi nesiller boyu ısınacak metal hafızaya sahip.",
+    bobsNote: "This radiator holds thermal memory like a family heirloom — it will warm generations.",
   },
   {
     type: "kiziltoprak",
-    title: "Kızıl Toprak",
-    subtitle: "Pişmiş toprak rengi demir.",
-    description: "Killi toprak ve demir oksitin birleştiği kaba, gözenekli tasarım.",
-    story: "Anadolu seyahatinden dönen Bob, killi kızıl toprakların renginden büyülendi. Demir alaşımını toprak pigmentleriyle birleştirerek pürüzlü, mat ve topraksı bir doku elde etti. Kızıl Toprak, doğanın sıcaklığıdır.",
-    spec: "Toprak Pigmentli Demir Oksit",
+    title: "Red Earth",
+    subtitle: "Iron the colour of fired clay.",
+    description: "A raw, porous design where iron oxide meets Anatolian clay — rough as the earth it evokes.",
+    story: "Returning from an Anatolian journey, Bob was transfixed by the colour of red clay soil. He blended iron alloy with earth pigments to achieve a texture that is coarse, matte, and deeply organic.",
+    spec: "Earth-Pigment Iron Oxide",
     weight: "96 kg",
-    bobsNote: "Dokunduğunuzda bir heykele dokunmuş gibi pürüzlü bir toprak hissi verir.",
+    bobsNote: "Touch it and you'll feel what a sculptor feels — rough earth, warm and alive.",
   },
   {
     type: "sessizalev",
-    title: "Sessiz Alev",
-    subtitle: "Siyah grafit ve kor.",
-    description: "Karanlıkta parlayan kor yataklarını andıran yüksek ısı kolonları.",
-    story: "Bob'un son tasarımlarından biri olan Sessiz Alev, fırın içindeki korların karanlıktaki dansını temsil eder. Grafit kaplı ince kolonlar ısıyı emdikçe, merkezindeki yarıklardan kızıl bir ışıltı yayılır.",
-    spec: "Fırçalanmış Grafit & Titanyum",
+    title: "Silent Flame",
+    subtitle: "Black graphite and glowing core.",
+    description: "High-heat columns that suggest the dance of embers glowing in a dark furnace.",
+    story: "One of Bob's last designs, Silent Flame represents the dance of embers in the dark. As the graphite-coated columns absorb heat, a deep crimson glow pulses through the slits at their core.",
+    spec: "Brushed Graphite & Titanium",
     weight: "54 kg",
-    bobsNote: "Atölyenin en sıcak eseri. Sadece ısınmak için değil, karanlığı aydınlatmak için tasarlandı.",
+    bobsNote: "The hottest piece in the workshop. Designed not just to warm a room — but to light it from within.",
   },
 ];
 
@@ -186,7 +186,7 @@ function ArchiveCard({ card, onOpen }: CardProps) {
       {/* Card Header */}
       <div className="flex flex-col items-start w-full">
         <span className="font-sans text-[9px] tracking-[0.25em] uppercase text-white/40 mb-1">
-          Hafıza Serisi
+          Memory Series
         </span>
         <h4 className="font-serif text-2xl md:text-3xl font-bold text-white tracking-tight">
           {card.title}
@@ -223,7 +223,7 @@ function ArchiveCard({ card, onOpen }: CardProps) {
                 className="w-full h-full bg-[#C45C26] hover:bg-[#d56b33] transition-colors text-[#E8D9C8] font-sans text-[10px] tracking-[0.2em] uppercase font-semibold flex items-center justify-center gap-1.5 cursor-pointer rounded-none"
               >
                 <Flame size={12} />
-                Bu Hafızayı Yak
+                Ignite This Memory
               </motion.button>
             ) : (
               <motion.div
@@ -232,7 +232,7 @@ function ArchiveCard({ card, onOpen }: CardProps) {
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: -40, opacity: 0 }}
                 transition={{ duration: 0.3, ease: [0.25, 1, 0.5, 1] }}
-                className="w-full h-full flex items-center justify-between border-t border-white/5 pt-3"
+                className="w-full h-full flex items-center justify-between border-t border-white/5 pt-3 gap-2"
               >
                 <span className="font-sans text-[9px] tracking-[0.2em] uppercase text-white/30">
                   Model No. 0{card.type.charCodeAt(0) % 9}
@@ -323,21 +323,21 @@ export default function TheArchive() {
       <div className="w-full max-w-7xl mx-auto px-6 md:px-12 flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 relative z-10">
         <div className="flex flex-col items-start">
           <span className="font-sans text-[10px] tracking-[0.3em] uppercase text-[#C45C26] font-semibold mb-3">
-            Koleksiyon
+            Collection
           </span>
           <h2 className="font-serif text-5xl md:text-7xl font-bold tracking-tight text-white">
             The Archive
           </h2>
         </div>
         <p className="font-sans text-sm text-white/50 max-w-sm font-light leading-relaxed">
-          Bob&apos;un farklı yıllarda özel siparişler üzerine tasarladığı döküm radyatörlerin 
-          hafızası. Kartları kaydırarak geçmişe dokunun ve üzerlerine tıklayarak ısılarını hissedin.
+          Five cast-iron sculptures commissioned across the decades — each one a thermal memory.
+          Drag through the collection and click any piece to feel its heat.
         </p>
       </div>
 
       {/* Drag & Scroll instruction hint */}
       <div className="w-full max-w-7xl mx-auto px-6 md:px-12 mb-4 flex items-center gap-2 text-[9px] font-sans tracking-[0.2em] uppercase text-white/30">
-        <Move size={10} /> Kaydırın veya Sürükleyin
+        <Move size={10} /> Scroll or Drag
       </div>
 
       {/* Horizontal Scroll Track Container */}

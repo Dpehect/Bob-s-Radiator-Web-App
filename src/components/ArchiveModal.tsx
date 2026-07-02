@@ -367,7 +367,7 @@ export default function ArchiveModal({ card, onClose }: ArchiveModalProps) {
         <div className="md:col-span-5 p-8 md:p-12 flex flex-col justify-between h-full overflow-y-auto select-none border-r border-white/5">
           <div className="flex flex-col items-start">
             <span className="font-sans text-[10px] tracking-[0.3em] uppercase text-[#C45C26] font-semibold mb-3">
-              Arşiv Kod No. 0{card.type.charCodeAt(0) % 9}
+              Archive Ref. No. 0{card.type.charCodeAt(0) % 9}
             </span>
             <h3 className="font-serif text-4xl md:text-5xl font-bold mb-6 tracking-tight text-white">
               {card.title}
@@ -380,15 +380,15 @@ export default function ArchiveModal({ card, onClose }: ArchiveModalProps) {
             {/* Spec Table */}
             <div className="w-full border-t border-white/5 pt-6 flex flex-col gap-4">
               <div className="flex justify-between items-center py-1">
-                <span className="font-sans text-[9px] tracking-[0.2em] uppercase text-white/40">Alaşım/Doku</span>
+                <span className="font-sans text-[9px] tracking-[0.2em] uppercase text-white/40">Alloy / Finish</span>
                 <span className="font-serif text-sm font-medium text-white/90">{card.spec}</span>
               </div>
               <div className="flex justify-between items-center py-1 border-t border-white/5">
-                <span className="font-sans text-[9px] tracking-[0.2em] uppercase text-white/40">Döküm Ağırlığı</span>
+                <span className="font-sans text-[9px] tracking-[0.2em] uppercase text-white/40">Cast Weight</span>
                 <span className="font-serif text-sm font-medium text-white/90">{card.weight}</span>
               </div>
               <div className="flex flex-col gap-2 py-3 border-t border-white/5">
-                <span className="font-sans text-[9px] tracking-[0.2em] uppercase text-white/40">Dökümhane Notu</span>
+                <span className="font-sans text-[9px] tracking-[0.2em] uppercase text-white/40">Foundry Note</span>
                 <span className="font-sans text-xs italic text-[#E8D9C8]/80 leading-relaxed font-light">
                   &ldquo;{card.bobsNote}&rdquo;
                 </span>
@@ -400,7 +400,7 @@ export default function ArchiveModal({ card, onClose }: ArchiveModalProps) {
           <div className="mt-8 pt-6 border-t border-white/5 w-full flex flex-col gap-5">
             <div className="flex items-center justify-between">
               <span className="font-sans text-[10px] tracking-[0.2em] uppercase text-white/40 flex items-center gap-1.5">
-                <Flame size={12} className="text-[#C45C26]" /> Isı Derecesi
+                <Flame size={12} className="text-[#C45C26]" /> Heat Intensity
               </span>
               <span className="font-serif text-xl font-bold text-[#C45C26]">{sliderValue} / 10</span>
             </div>
@@ -422,7 +422,7 @@ export default function ArchiveModal({ card, onClose }: ArchiveModalProps) {
               className="w-full py-3 bg-[#C45C26] hover:bg-[#d56b33] active:scale-98 transition-all font-sans text-xs tracking-[0.2em] uppercase text-[#E8D9C8] font-semibold rounded-none cursor-pointer flex items-center justify-center gap-2"
             >
               <Sparkles size={12} />
-              Isıyı Sal ve Kapat (+{sliderValue * 2}°)
+              Release Heat &amp; Close (+{sliderValue * 2}°)
             </button>
           </div>
         </div>
@@ -453,7 +453,7 @@ export default function ArchiveModal({ card, onClose }: ArchiveModalProps) {
           </Canvas>
           
           <div className="absolute bottom-4 left-4 text-[9px] font-sans tracking-[0.2em] uppercase text-white/30 pointer-events-none">
-            Etkileşimli Model (İncele & Döndür)
+            Interactive Model (Explore &amp; Rotate)
           </div>
         </div>
 

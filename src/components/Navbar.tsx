@@ -204,7 +204,7 @@ export default function Navbar() {
 
               <span className="relative flex items-center gap-2 text-xs uppercase tracking-[0.2em] font-medium font-sans group-hover:text-[#E8D9C8] transition-colors duration-300">
                 <Flame size={12} className="text-[#C45C26] group-hover:text-inherit transition-colors duration-300" />
-                Isı Bırak
+                Add Heat
               </span>
             </button>
           </div>
