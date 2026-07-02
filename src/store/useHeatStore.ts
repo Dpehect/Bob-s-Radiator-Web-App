@@ -1,46 +1,31 @@
 import { create } from "zustand";
+import type { RadiatorType, RadiatorSurface, RadiatorHeight } from "@/lib/constants";
 
 interface HeatState {
-  heatLevel: number; // 0 to 100
-  accumulatedHeat: number; // overall clicks / scrolls / interactions
-  isLoaded: boolean;
-  forgeProgress: number; // 0 to 1 representing scroll in The Forge section
-  logoClickCount: number; // logo clicks for easter egg
-  updateGlobalHeat: (level: number) => void;
-  increaseHeat: (amount: number) => void;
-  setLoaded: (loaded: boolean) => void;
-  setForgeProgress: (val: number) => void;
-  setLogoClickCount: (count: number) => void;
-  incrementLogoClick: () => void;
+  /* Global heat level (0–100) */
+  heatLevel: number;
+  increaseHeat: (amount?: number) => void;
+
+  /* Configurator state */
+  radiatorType: RadiatorType;
+  radiatorSurface: RadiatorSurface;
+  radiatorHeight: RadiatorHeight;
+  setRadiatorType: (type: RadiatorType) => void;
+  setRadiatorSurface: (surface: RadiatorSurface) => void;
+  setRadiatorHeight: (height: RadiatorHeight) => void;
+  setHeatLevel: (level: number) => void;
 }
 
 export const useHeatStore = create<HeatState>((set) => ({
-  heatLevel: 0,
-  accumulatedHeat: 0,
-  isLoaded: false,
-  forgeProgress: 0,
-  logoClickCount: 0,
-  updateGlobalHeat: (level) =>
-    set(() => {
-      const clamped = Math.max(0, Math.min(100, level));
-      if (typeof window !== "undefined") {
-        document.documentElement.style.setProperty("--heat-ratio", (clamped / 100).toString());
-      }
-      return { heatLevel: clamped };
-    }),
-  increaseHeat: (amount) =>
-    set((state) => {
-      const nextLevel = Math.min(100, state.heatLevel + amount);
-      if (typeof window !== "undefined") {
-        document.documentElement.style.setProperty("--heat-ratio", (nextLevel / 100).toString());
-      }
-      return {
-        heatLevel: nextLevel,
-        accumulatedHeat: state.accumulatedHeat + amount,
-      };
-    }),
-  setLoaded: (loaded) => set({ isLoaded: loaded }),
-  setForgeProgress: (val) => set({ forgeProgress: val }),
-  setLogoClickCount: (count) => set({ logoClickCount: count }),
-  incrementLogoClick: () => set((state) => ({ logoClickCount: state.logoClickCount + 1 })),
+  heatLevel: 20,
+  increaseHeat: (amount = 5) =>
+    set((state) => ({ heatLevel: Math.min(100, state.heatLevel + amount) })),
+
+  radiatorType: "classic",
+  radiatorSurface: "brass",
+  radiatorHeight: "mid",
+  setRadiatorType: (type) => set({ radiatorType: type }),
+  setRadiatorSurface: (surface) => set({ radiatorSurface: surface }),
+  setRadiatorHeight: (height) => set({ radiatorHeight: height }),
+  setHeatLevel: (level) => set({ heatLevel: Math.max(0, Math.min(100, level)) }),
 }));

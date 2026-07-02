@@ -1,176 +1,109 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, useMotionValue, useSpring } from "framer-motion";
-import { useHeatStore } from "@/store/useHeatStore";
 
+/**
+ * Premium custom cursor with smooth trailing spring physics and interactive states.
+ * Only loaded on hoverable fine pointer devices (desktops).
+ */
 export default function CustomCursor() {
-  const [cursorType, setCursorType] = useState<"default" | "hover-3d" | "hover-link" | "hover-btn">("default");
-  const [isVisible, setIsVisible] = useState(false);
-  const [isPressed, setIsPressed] = useState(false);
-  const dotRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [hidden, setHidden] = useState(true);
 
-  const heatLevel = useHeatStore((state) => state.heatLevel);
-  const heatRatio = heatLevel / 100;
+  // Position coordinates
+  const cursorX = useMotionValue(-100);
+  const cursorY = useMotionValue(-100);
 
-  // Main trailing cursor coords
-  const cursorX = useMotionValue(-200);
-  const cursorY = useMotionValue(-200);
+  // Smooth springs for outer ring trail follow
+  const springConfig = { stiffness: 250, damping: 28, mass: 0.5 };
+  const springX = useSpring(cursorX, springConfig);
+  const springY = useSpring(cursorY, springConfig);
 
-  // Outer ring has heavier spring (more lag = elegant trail)
-  const ringConfig = { damping: 28, stiffness: 220, mass: 0.8 };
-  const ringXSpring = useSpring(cursorX, ringConfig);
-  const ringYSpring = useSpring(cursorY, ringConfig);
-
-  // Dot follows instantly
-  const dotX = useMotionValue(-200);
-  const dotY = useMotionValue(-200);
-
+  // Simple client-side mount hook
   useEffect(() => {
-    document.documentElement.style.cursor = "none";
+    const frameId = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(frameId);
+  }, []);
+
+  // Listeners setup when mounted
+  useEffect(() => {
+    if (!mounted) return;
 
     const moveCursor = (e: MouseEvent) => {
-      // Dot: direct position
-      dotX.set(e.clientX);
-      dotY.set(e.clientY);
-
-      // Ring: spring-lagged
       cursorX.set(e.clientX);
       cursorY.set(e.clientY);
-
-      if (!isVisible) setIsVisible(true);
+      setHidden(false);
     };
 
-    const handleMouseLeave = () => setIsVisible(false);
-    const handleMouseEnter = () => setIsVisible(true);
-    const handleMouseDown = () => setIsPressed(true);
-    const handleMouseUp = () => setIsPressed(false);
+    const handleMouseLeave = () => setHidden(true);
+    const handleMouseEnter = () => setHidden(false);
 
-    const handleMouseOver = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target) return;
-
-      if (target.closest('[data-cursor="3d"]') || target.closest("canvas")) {
-        setCursorType("hover-3d");
-      } else if (target.closest("button")) {
-        setCursorType("hover-btn");
-      } else if (
-        target.closest("a") ||
-        target.closest(".cursor-pointer") ||
-        target.closest('input[type="range"]')
-      ) {
-        setCursorType("hover-link");
-      } else {
-        setCursorType("default");
-      }
+    // Track links, buttons, range inputs, select pills
+    const addHoverListeners = () => {
+      const targets = document.querySelectorAll(
+        'a, button, input[type="range"], [role="button"]'
+      );
+      targets.forEach((elem) => {
+        elem.addEventListener("mouseenter", () => setHovered(true));
+        elem.addEventListener("mouseleave", () => setHovered(false));
+      });
     };
 
-    window.addEventListener("mousemove", moveCursor, { passive: true });
-    window.addEventListener("mouseover", handleMouseOver);
-    window.addEventListener("mousedown", handleMouseDown);
-    window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener("mousemove", moveCursor);
     document.addEventListener("mouseleave", handleMouseLeave);
     document.addEventListener("mouseenter", handleMouseEnter);
 
+    // Initial listener scan + continuous observation of dynamic changes
+    addHoverListeners();
+    const observer = new MutationObserver(addHoverListeners);
+    observer.observe(document.body, { childList: true, subtree: true });
+
     return () => {
-      document.documentElement.style.cursor = "auto";
       window.removeEventListener("mousemove", moveCursor);
-      window.removeEventListener("mouseover", handleMouseOver);
-      window.removeEventListener("mousedown", handleMouseDown);
-      window.removeEventListener("mouseup", handleMouseUp);
       document.removeEventListener("mouseleave", handleMouseLeave);
       document.removeEventListener("mouseenter", handleMouseEnter);
+      observer.disconnect();
     };
-  }, [cursorX, cursorY, dotX, dotY, isVisible]);
+  }, [mounted, cursorX, cursorY]);
 
-  if (typeof window === "undefined") return null;
-
-  // Dynamic ring accent color: cool grey → warm orange as heat rises
-  const ringOpacity = cursorType === "hover-3d" ? 0.9 : cursorType === "hover-btn" ? 0.7 : 0.45;
-  const ringColorR = Math.round(140 + heatRatio * 96);  // 140 → 196 (grey → orange)
-  const ringColorG = Math.round(110 - heatRatio * 50);  // 110 → 92
-  const ringColorB = Math.round(100 - heatRatio * 62);  // 100 → 38
-  const ringColor = `rgba(${ringColorR}, ${ringColorG}, ${ringColorB}, ${ringOpacity})`;
-
-  // Ring sizing per state
-  const ringSize = isPressed
-    ? 20
-    : cursorType === "hover-3d"
-    ? 52 + heatRatio * 8
-    : cursorType === "hover-btn"
-    ? 38
-    : cursorType === "hover-link"
-    ? 28
-    : 18;
+  if (!mounted || typeof window === "undefined") return null;
 
   return (
-    <>
-      {/* ─── Outer Lagging Ring ─── */}
+    <div className="fixed inset-0 pointer-events-none z-9999 mix-blend-difference hidden md:block">
+      {/* Outer Spring Ring */}
       <motion.div
-        className="fixed top-0 left-0 rounded-full pointer-events-none z-[9999] hidden md:block -translate-x-1/2 -translate-y-1/2"
+        className="absolute w-8 h-8 rounded-full border border-cream"
         style={{
-          x: ringXSpring,
-          y: ringYSpring,
-          width: ringSize,
-          height: ringSize,
-          border: `1px solid ${ringColor}`,
-          backgroundColor:
-            cursorType === "hover-3d"
-              ? `rgba(${ringColorR}, ${ringColorG}, ${ringColorB}, ${0.04 + heatRatio * 0.05})`
-              : cursorType === "hover-btn"
-              ? "rgba(196, 92, 38, 0.06)"
-              : "transparent",
-          transition: "width 0.35s cubic-bezier(0.25,1,0.5,1), height 0.35s cubic-bezier(0.25,1,0.5,1), border-color 0.4s ease, background-color 0.4s ease",
-          // Add a warm glow on 3D/hot hover
-          boxShadow:
-            cursorType === "hover-3d" && heatRatio > 0.3
-              ? `0 0 ${Math.round(8 + heatRatio * 14)}px rgba(196, 92, 38, ${0.15 + heatRatio * 0.25})`
-              : "none",
+          x: springX,
+          y: springY,
+          translateX: "-50%",
+          translateY: "-50%",
         }}
-      >
-        {/* Heat wave inside 3D hover */}
-        {cursorType === "hover-3d" && (
-          <svg
-            viewBox="0 0 100 24"
-            className="w-full h-full p-2.5 opacity-80 pointer-events-none overflow-visible"
-          >
-            <path
-              d="M 5 12 Q 28 3 50 12 T 95 12"
-              fill="none"
-              stroke={`rgb(${ringColorR}, ${ringColorG}, ${ringColorB})`}
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            >
-              <animate
-                attributeName="d"
-                dur="1.6s"
-                repeatCount="indefinite"
-                values="M 5 12 Q 28 3 50 12 T 95 12;
-                        M 5 12 Q 28 21 50 12 T 95 12;
-                        M 5 12 Q 28 3 50 12 T 95 12"
-              />
-            </path>
-          </svg>
-        )}
-      </motion.div>
-
-      {/* ─── Immediate Inner Dot ─── */}
-      <motion.div
-        ref={dotRef}
-        className="fixed top-0 left-0 rounded-full pointer-events-none z-[9999] hidden md:block -translate-x-1/2 -translate-y-1/2"
-        style={{
-          x: dotX,
-          y: dotY,
-          width: isVisible ? (cursorType === "default" ? 4 : 3) : 0,
-          height: isVisible ? (cursorType === "default" ? 4 : 3) : 0,
-          backgroundColor:
-            cursorType === "default"
-              ? `rgba(${ringColorR}, ${ringColorG}, ${ringColorB}, 0.7)`
-              : `rgb(${ringColorR}, ${ringColorG}, ${ringColorB})`,
-          opacity: isVisible ? 1 : 0,
-          transition: "width 0.15s ease, height 0.15s ease, opacity 0.15s ease",
+        animate={{
+          scale: hovered ? 1.5 : 1,
+          backgroundColor: hovered ? "rgba(245, 227, 205, 0.1)" : "rgba(0, 0, 0, 0)",
+          opacity: hidden ? 0 : 0.8,
         }}
+        transition={{ type: "tween", ease: "backOut", duration: 0.35 }}
       />
-    </>
+
+      {/* Inner Point Dot */}
+      <motion.div
+        className="absolute w-2 h-2 rounded-full bg-terracotta"
+        style={{
+          x: cursorX,
+          y: cursorY,
+          translateX: "-50%",
+          translateY: "-50%",
+        }}
+        animate={{
+          scale: hovered ? 0.6 : 1,
+          opacity: hidden ? 0 : 1,
+        }}
+        transition={{ type: "tween", ease: "easeOut", duration: 0.15 }}
+      />
+    </div>
   );
 }

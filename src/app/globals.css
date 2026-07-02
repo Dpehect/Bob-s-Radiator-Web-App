@@ -1,132 +1,81 @@
 @import "tailwindcss";
 
 @theme {
-  --font-serif: var(--font-instrument-serif), serif;
-  --font-sans: var(--font-instrument-sans), sans-serif;
-  
-  --color-cool-dark: #1C1814;
-  --color-cool-gray: #3D2B1F;
-  --color-hot-orange: #C45C26;
-  --color-warm-cream: #E8D9C8;
+  /* ─── Colors ─── */
+  --color-charcoal: #1C1814;
+  --color-charcoal-light: #2A2420;
+  --color-cream: #F5E3CD;
+  --color-cream-dark: #E8D3B8;
+  --color-warm-white: #FAF7F2;
+  --color-terracotta: #C45C26;
+  --color-terracotta-light: #D4744A;
+  --color-brass: #B3985C;
+  --color-brass-light: #C9B17A;
+  --color-ember: #FF6B35;
+  --color-deep-red: #8D3E31;
+  --color-smoke: #6B635B;
+
+  /* ─── Typography ─── */
+  --font-sans: var(--font-outfit), system-ui, sans-serif;
+  --font-display: var(--font-playfair), Georgia, serif;
+
+  /* ─── Spacing ─── */
+  --spacing-section: clamp(80px, 10vw, 160px);
+  --spacing-section-sm: clamp(48px, 6vw, 96px);
 }
 
-:root {
-  --heat-ratio: 0; /* Updated dynamically via JavaScript from 0 to 1 */
-  
-  /* Interpolated colors using CSS color-mix */
-  --bg-color: color-mix(in srgb, var(--color-cool-gray) calc(var(--heat-ratio) * 40%), var(--color-cool-dark));
-  --fg-color: color-mix(in srgb, var(--color-warm-cream) calc(var(--heat-ratio) * 100%), #9B8D82);
-  --accent-color: color-mix(in srgb, var(--color-hot-orange) calc(var(--heat-ratio) * 100%), var(--color-cool-gray));
-  
-  /* Typography adjustments based on heat ratio */
-  --heading-letter-spacing: calc(-0.02em + (0.04em * var(--heat-ratio)));
-  --heading-line-height: calc(1.1 - (0.05 * var(--heat-ratio)));
-  
-  --body-letter-spacing: calc(0.01em - (0.01em * var(--heat-ratio)));
-  --body-line-height: calc(1.6 - (0.1 * var(--heat-ratio)));
+/* ─── Base Styles ─── */
+@layer base {
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background-color: var(--color-terracotta);
+    color: var(--color-cream);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    background-color: var(--color-warm-white);
+    color: var(--color-charcoal);
+  }
+
+  body {
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+  }
 }
 
-body {
-  background-color: var(--bg-color);
-  color: var(--fg-color);
-  font-family: var(--font-sans);
-  letter-spacing: var(--body-letter-spacing);
-  line-height: var(--body-line-height);
-  transition: background-color 0.8s cubic-bezier(0.22, 1, 0.36, 1), 
-              color 0.8s cubic-bezier(0.22, 1, 0.36, 1),
-              letter-spacing 0.8s cubic-bezier(0.22, 1, 0.36, 1),
-              line-height 0.8s cubic-bezier(0.22, 1, 0.36, 1);
-  overflow-x: hidden;
-  position: relative;
-  min-height: 100vh;
+/* ─── Custom Cursor (hide default on desktop) ─── */
+@media (hover: hover) and (pointer: fine) {
+  * {
+    cursor: none !important;
+  }
 }
 
-/* Matte, slightly textured workshop feel */
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  opacity: 0.025;
-  pointer-events: none;
-  z-index: 9999;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-}
-
-/* Scrollbar styles to match the matte, custom UI */
+/* ─── Scrollbar ─── */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
+
 ::-webkit-scrollbar-track {
-  background: var(--bg-color);
+  background: var(--color-warm-white);
 }
+
 ::-webkit-scrollbar-thumb {
-  background: var(--accent-color);
-  border-radius: 4px;
+  background: var(--color-brass);
+  border-radius: 3px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-hot-orange);
-}
-
-.heading-dynamic {
-  letter-spacing: var(--heading-letter-spacing);
-  line-height: var(--heading-line-height);
-  font-family: var(--font-serif);
-  transition: letter-spacing 0.8s cubic-bezier(0.22, 1, 0.36, 1),
-              line-height 0.8s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-/* Custom ease classes for transitions */
-.transition-heat {
-  transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
-}
-
-/* Heat-reactive particle ascend animation */
-@keyframes particleAscend {
-  0% {
-    transform: translateY(0) scale(1);
-    opacity: var(--p-opacity, 0.18);
-  }
-  60% {
-    opacity: calc(var(--p-opacity, 0.18) * 0.7);
-  }
-  100% {
-    transform: translateY(-100vh) scale(0.4);
-    opacity: 0;
-  }
-}
-
-/* Subtle text shimmer for selected headings on high heat */
-@keyframes heatShimmer {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.88; }
-}
-
-/* Smooth range input styling */
-input[type="range"] {
-  -webkit-appearance: none;
-  height: 2px;
-}
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 14px;
-  height: 14px;
-  border-radius: 0;
-  background: #C45C26;
-  cursor: ew-resize;
-  border: none;
-  box-shadow: 0 0 0 1px rgba(196, 92, 38, 0.3);
-  transition: box-shadow 0.2s ease;
-}
-input[type="range"]::-webkit-slider-thumb:hover {
-  box-shadow: 0 0 0 4px rgba(196, 92, 38, 0.18);
-}
-input[type="range"]::-moz-range-thumb {
-  width: 14px;
-  height: 14px;
-  border-radius: 0;
-  background: #C45C26;
-  cursor: ew-resize;
-  border: none;
+  background: var(--color-terracotta);
 }
