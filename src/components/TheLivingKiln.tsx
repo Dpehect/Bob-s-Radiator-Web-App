@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useHeatStore } from "@/store/useHeatStore";
 import dynamic from "next/dynamic";
-import { Flame, Sparkles, Download, Check, RefreshCw } from "lucide-react";
+import { Sparkles, Download, Check, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const ConfiguratorCanvas = dynamic(() => import("./ConfiguratorCanvas"), {
@@ -100,6 +100,20 @@ export default function TheLivingKiln() {
   const [designerName, setDesignerName] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  // Dynamic workshop telemetry calculations
+  const alloyTemp = Math.round(273 + (heatLevel / 100) * 80); // Kelvin
+  const metalFluidity = Math.round(10 + (heatLevel / 100) * 85); // %
+  const structuralMass = height === "low" ? 64 : height === "mid" ? 92 : 138; // kg
+  const emissiveFlux = (0.05 + (heatLevel / 100) * 2.8).toFixed(2); // W
+  const surfaceReflectivity =
+    surface === "black"
+      ? "12% (Matte)"
+      : surface === "terracotta"
+      ? "5% (Porous)"
+      : surface === "copper"
+      ? "74% (Aged)"
+      : "90% (Polished)";
 
   // Heavy-weighted certificate generator
   const handleGenerateCertificate = () => {
@@ -439,51 +453,35 @@ export default function TheLivingKiln() {
               </div>
             </div>
 
-            {/* 4. Heat Slider */}
-            <div className="pt-5 border-t border-white/[0.06]">
-              <div className="flex items-center justify-between mb-4">
-                <span className="font-sans text-[9px] tracking-[0.28em] uppercase text-white/35 flex items-center gap-1.5">
-                  <Flame size={10} className="text-[#C45C26]" />
-                  04 — Heat Intensity
-                </span>
-                <motion.span
-                  key={heatLevel}
-                  initial={{ scale: 1.2, color: "#FF7034" }}
-                  animate={{ scale: 1, color: "#C45C26" }}
-                  transition={{ duration: 0.4 }}
-                  className="font-serif text-2xl font-bold tabular-nums"
-                >
-                  {heatLevel}°
-                </motion.span>
+            {/* 4. Foundry Telemetry Readout */}
+            <div className="pt-5 border-t border-white/[0.06] font-mono text-[9px] text-[#C45C26]/90 flex flex-col gap-2">
+              <span className="font-sans text-[9px] tracking-[0.28em] uppercase text-white/35 block mb-1">
+                04 — Foundry Telemetry
+              </span>
+              <div className="bg-black/55 border border-white/[0.05] p-4 flex flex-col gap-2 leading-relaxed relative overflow-hidden">
+                {/* Horizontal scanline scan glow */}
+                <div className="absolute inset-0 bg-gradient-to-b from-[#C45C26]/[0.018] to-transparent pointer-events-none" />
+                <div className="flex justify-between">
+                  <span className="text-white/35">ALLOY TEMPERATURE:</span>
+                  <span className="text-white/75">{alloyTemp} K ({heatLevel}°C)</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-white/35">METAL FLUIDITY:</span>
+                  <span className="text-white/75">{metalFluidity}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-white/35">STRUCTURAL MASS:</span>
+                  <span className="text-white/75">{structuralMass} KG</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-white/35">EMISSIVE FLUX:</span>
+                  <span className="text-white/75">{emissiveFlux} FLUX</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-white/35">SURFACE STRUCTURE:</span>
+                  <span className="text-white/75">{surfaceReflectivity}</span>
+                </div>
               </div>
-
-              {/* Custom heat slider */}
-              <div className="relative w-full h-6 flex items-center">
-                <div
-                  className="absolute inset-y-0 left-0 rounded pointer-events-none transition-all duration-200"
-                  style={{
-                    width: `${heatLevel}%`,
-                    background: `linear-gradient(to right, #3D2B1F, #C45C26 60%, #FF6B35)`,
-                    boxShadow: heatLevel > 20 ? `0 0 ${8 + heatLevel * 0.12}px rgba(196,92,38,${0.2 + heatLevel * 0.004})` : "none",
-                  }}
-                />
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={heatLevel}
-                  onChange={(e) => updateGlobalHeat(parseInt(e.target.value))}
-                  className="relative w-full h-1 bg-white/[0.07] rounded appearance-none cursor-pointer focus:outline-none z-10"
-                  style={{
-                    accentColor: "#C45C26",
-                  }}
-                />
-              </div>
-
-              {/* Heat description */}
-              <p className="font-sans text-[9px] text-white/25 italic mt-2.5 leading-relaxed">
-                Heat rises with bloom intensity, ascending particles and room aura redness.
-              </p>
             </div>
 
           </div>
@@ -534,14 +532,72 @@ export default function TheLivingKiln() {
             <ConfiguratorCanvas type={type} surface={surface} height={height} />
           </div>
 
+          {/* Vertical Mercury Thermometer Gauge (Artisanal heat controller) */}
+          <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-3.5 z-20 select-none hidden sm:flex">
+            {/* Ticks & Readings */}
+            <div className="flex flex-col justify-between h-[260px] text-[7.5px] font-mono text-white/25 items-end py-1 leading-none tracking-widest">
+              <span>100°C</span>
+              <span>80°</span>
+              <span>60°</span>
+              <span>40°</span>
+              <span>20°</span>
+              <span>0°C</span>
+            </div>
+
+            {/* Glass Tube Frame */}
+            <div
+              className="relative w-8 h-[260px] border border-white/10 bg-black/55 flex justify-center cursor-ns-resize group/tube rounded-full"
+              title="Drag up/down to adjust mold temperature"
+              onMouseDown={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const updateVal = (clientY: number) => {
+                  const relativeY = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
+                  const newHeat = Math.round((1 - relativeY) * 100);
+                  updateGlobalHeat(newHeat);
+                };
+                updateVal(e.clientY);
+
+                const handleMouseMove = (moveEvent: MouseEvent) => {
+                  updateVal(moveEvent.clientY);
+                };
+                const handleMouseUp = () => {
+                  window.removeEventListener("mousemove", handleMouseMove);
+                  window.removeEventListener("mouseup", handleMouseUp);
+                };
+                window.addEventListener("mousemove", handleMouseMove);
+                window.addEventListener("mouseup", handleMouseUp);
+              }}
+            >
+              {/* Internal glass tube column */}
+              <div className="w-[3px] h-[92%] bg-white/[0.04] rounded-full my-auto relative overflow-hidden flex flex-col justify-end">
+                {/* Red thermal fluid indicator */}
+                <motion.div
+                  className="w-full bg-gradient-to-t from-[#3D2B1F] via-[#C45C26] to-[#FF6B35] rounded-full origin-bottom"
+                  style={{
+                    height: `${heatLevel}%`,
+                  }}
+                  transition={{ type: "spring", stiffness: 180, damping: 25 }}
+                />
+              </div>
+
+              {/* Mercury bulb reservoir at base */}
+              <div
+                className="absolute bottom-[4px] w-3 h-3 rounded-full border border-white/12 transition-all duration-500"
+                style={{
+                  backgroundColor: heatLevel > 15 ? "#C45C26" : "#241F1B",
+                  boxShadow: heatLevel > 15 ? `0 0 14px rgba(196,92,38,0.85)` : "none",
+                }}
+              />
+            </div>
+          </div>
+
           {/* Studio label */}
           <div className="absolute bottom-4 left-4 text-[8px] font-sans tracking-[0.28em] uppercase text-white/25 pointer-events-none z-10">
             Foundry Studio — Explore & Rotate
           </div>
           {/* Heat indicator */}
           <div
-            className="absolute bottom-4 right-4 text-[8px] font-sans tracking-[0.2em] uppercase pointer-events-none z-10 transition-all duration-500"
-            style={{ color: `rgba(196, 92, 38, ${0.3 + heatLevel * 0.007})` }}
+            className="absolute bottom-4 right-4 text-[8px] font-sans tracking-[0.2em] uppercase pointer-events-none z-10 transition-all duration-500 sm:hidden"
           >
             {heatLevel}° active
           </div>

@@ -132,6 +132,101 @@ function ConfiguratorParticles({ count = 80 }) {
   );
 }
 
+// Procedural bump/micro-grain texture generator for high PBR realism
+const createProceduralTexture = (surface: "brass" | "black" | "terracotta" | "copper") => {
+  if (typeof window === "undefined") return null;
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  // Base neutral fill
+  ctx.fillStyle = "#808080";
+  ctx.fillRect(0, 0, 256, 256);
+
+  const imgData = ctx.getImageData(0, 0, 256, 256);
+  const data = imgData.data;
+
+  // Generate pattern based on surface type
+  if (surface === "brass") {
+    // Brushed linear metal texture: vertical lines
+    for (let x = 0; x < 256; x++) {
+      const colNoise = Math.sin(x * 0.45) * 12 + (Math.random() - 0.5) * 35;
+      for (let y = 0; y < 256; y++) {
+        const val = Math.max(0, Math.min(255, 128 + colNoise + (Math.random() - 0.5) * 12));
+        const idx = (y * 256 + x) * 4;
+        data[idx] = val;
+        data[idx + 1] = val;
+        data[idx + 2] = val;
+      }
+    }
+  } else if (surface === "black") {
+    // Coarse, hammered cast iron: cellular blobs + noise
+    for (let i = 0; i < data.length; i += 4) {
+      const val = Math.max(0, Math.min(255, 128 + (Math.random() - 0.5) * 25));
+      data[i] = val;
+      data[i + 1] = val;
+      data[i + 2] = val;
+    }
+    ctx.putImageData(imgData, 0, 0);
+    for (let k = 0; k < 75; k++) {
+      const rx = Math.random() * 256;
+      const ry = Math.random() * 256;
+      const rad = 5 + Math.random() * 10;
+      const grad = ctx.createRadialGradient(rx, ry, 0, rx, ry, rad);
+      grad.addColorStop(0, "rgba(70,70,70,0.18)");
+      grad.addColorStop(0.5, "rgba(128,128,128,0.06)");
+      grad.addColorStop(1, "rgba(128,128,128,0)");
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(rx, ry, rad, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(2, 2);
+    return texture;
+  } else if (surface === "terracotta") {
+    // Sandy, porous clay texture
+    for (let i = 0; i < data.length; i += 4) {
+      const val = Math.max(0, Math.min(255, 128 + (Math.random() - 0.5) * 45));
+      data[i] = val;
+      data[i + 1] = val;
+      data[i + 2] = val;
+    }
+  } else {
+    // Copper: organic weathered waves
+    for (let y = 0; y < 256; y++) {
+      for (let x = 0; x < 256; x++) {
+        const val = Math.max(
+          0,
+          Math.min(
+            255,
+            128 +
+              Math.sin(x * 0.06 + y * 0.04) * 12 +
+              Math.cos(y * 0.05 - x * 0.05) * 12 +
+              (Math.random() - 0.5) * 8
+          )
+        );
+        const idx = (y * 256 + x) * 4;
+        data[idx] = val;
+        data[idx + 1] = val;
+        data[idx + 2] = val;
+      }
+    }
+  }
+
+  ctx.putImageData(imgData, 0, 0);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(1.5, 4.0); // stretched vertically
+  return texture;
+};
+
 interface ConfiguratorCanvasProps {
   type: "classic" | "wave" | "tower";
   surface: "brass" | "black" | "terracotta" | "copper";
@@ -236,6 +331,17 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
 
   const { color, metalness, roughness } = surfaceConfig;
 
+  // Generate dynamic micro-bump texture based on surface
+  const bumpTexture = useMemo(() => {
+    return createProceduralTexture(surface);
+  }, [surface]);
+
+  const bumpScale = useMemo(() => {
+    if (surface === "terracotta") return 0.015;
+    if (surface === "black") return 0.025;
+    return 0.008; // brushed brass/copper
+  }, [surface]);
+
   // Heat emissive glow (#FF6B35 direction)
   const emissiveColor = new THREE.Color("#FF6B35");
   const emissiveIntensity = heatRatio * 1.35; // glowing embers
@@ -258,6 +364,7 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
   const currentColor = new THREE.Color(color).lerp(new THREE.Color("#C45C26"), heatRatio * 0.22);
   const currentRoughness = Math.max(0.15, roughness - heatRatio * 0.1);
 
+
   return (
     <group ref={groupRef}>
       {/* 1. Upper Horizontal Pipe */}
@@ -269,6 +376,8 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
           roughness={currentRoughness}
           emissive={emissiveColor}
           emissiveIntensity={emissiveIntensity}
+          bumpMap={bumpTexture || undefined}
+          bumpScale={bumpScale}
         />
       </mesh>
       {/* Capped upper end domes */}
@@ -280,6 +389,8 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
           roughness={currentRoughness}
           emissive={emissiveColor}
           emissiveIntensity={emissiveIntensity}
+          bumpMap={bumpTexture || undefined}
+          bumpScale={bumpScale}
         />
       </mesh>
       <mesh position={[width / 2 + 0.18, modelHeight / 2, 0]}>
@@ -290,6 +401,8 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
           roughness={currentRoughness}
           emissive={emissiveColor}
           emissiveIntensity={emissiveIntensity}
+          bumpMap={bumpTexture || undefined}
+          bumpScale={bumpScale}
         />
       </mesh>
 
@@ -302,6 +415,8 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
           roughness={currentRoughness}
           emissive={emissiveColor}
           emissiveIntensity={emissiveIntensity}
+          bumpMap={bumpTexture || undefined}
+          bumpScale={bumpScale}
         />
       </mesh>
       {/* Capped lower end domes */}
@@ -313,6 +428,8 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
           roughness={currentRoughness}
           emissive={emissiveColor}
           emissiveIntensity={emissiveIntensity}
+          bumpMap={bumpTexture || undefined}
+          bumpScale={bumpScale}
         />
       </mesh>
       <mesh position={[width / 2 + 0.18, -modelHeight / 2, 0]}>
@@ -323,6 +440,8 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
           roughness={currentRoughness}
           emissive={emissiveColor}
           emissiveIntensity={emissiveIntensity}
+          bumpMap={bumpTexture || undefined}
+          bumpScale={bumpScale}
         />
       </mesh>
 
@@ -336,6 +455,8 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
           roughness={currentRoughness}
           emissive={emissiveColor}
           emissiveIntensity={emissiveIntensity}
+          bumpMap={bumpTexture || undefined}
+          bumpScale={bumpScale}
         />
       </mesh>
       {/* Valve connector spherical joint */}
@@ -347,6 +468,8 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
           roughness={currentRoughness}
           emissive={emissiveColor}
           emissiveIntensity={emissiveIntensity}
+          bumpMap={bumpTexture || undefined}
+          bumpScale={bumpScale}
         />
       </mesh>
       {/* Hand wheel handle dial */}
@@ -358,6 +481,8 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
           roughness={currentRoughness}
           emissive={emissiveColor}
           emissiveIntensity={emissiveIntensity}
+          bumpMap={bumpTexture || undefined}
+          bumpScale={bumpScale}
         />
       </mesh>
 
@@ -381,6 +506,8 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
                 roughness={currentRoughness}
                 emissive={emissiveColor}
                 emissiveIntensity={emissiveIntensity}
+                bumpMap={bumpTexture || undefined}
+                bumpScale={bumpScale}
               />
             </mesh>
 
@@ -393,6 +520,8 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
                 roughness={currentRoughness}
                 emissive={emissiveColor}
                 emissiveIntensity={emissiveIntensity}
+                bumpMap={bumpTexture || undefined}
+                bumpScale={bumpScale}
               />
             </mesh>
 
@@ -405,6 +534,8 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
                 roughness={currentRoughness}
                 emissive={emissiveColor}
                 emissiveIntensity={emissiveIntensity}
+                bumpMap={bumpTexture || undefined}
+                bumpScale={bumpScale}
               />
             </mesh>
           </group>
@@ -418,6 +549,7 @@ function ConfiguratorRadiatorModel({ type, surface, height, isMobile = false }: 
 function RoomEnvironment() {
   const heatLevel = useHeatStore((state) => state.heatLevel);
   const heatRatio = heatLevel / 100;
+  const furnaceLightRef = useRef<THREE.PointLight>(null);
 
   // Background room color turns warm and glowing under heavy heat
   const plasterColor = useMemo(() => {
@@ -426,8 +558,26 @@ function RoomEnvironment() {
     return coolPlaster.lerp(hotPlaster, heatRatio * 0.38);
   }, [heatRatio]);
 
+  // Pulse furnace light to simulate active smoldering flame overlay
+  useFrame((state) => {
+    if (furnaceLightRef.current) {
+      const time = state.clock.getElapsedTime();
+      const pulse = Math.sin(time * 3.8) * 0.18 + Math.cos(time * 2.2) * 0.12;
+      furnaceLightRef.current.intensity = Math.max(0, (1.5 + pulse) * heatRatio * 2.4);
+    }
+  });
+
   return (
     <group position={[0, -0.2, 0]}>
+      {/* Dynamic pulsing furnace light on the side to simulate active forge flames */}
+      <pointLight
+        ref={furnaceLightRef}
+        position={[3.5, -1.8, 1.2]}
+        color="#FF5500"
+        distance={8}
+        decay={2}
+      />
+
       {/* 1. Backdrop Wall (Facing camera) */}
       <mesh position={[0, 0, -2.0]}>
         <planeGeometry args={[12, 8]} />
