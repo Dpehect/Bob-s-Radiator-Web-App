@@ -128,6 +128,12 @@ function MiniRadiatorModel({ type, isHovered }: MiniRadiatorProps) {
   } = config;
 
   const width = (pipesCount - 1) * spacing;
+  const emissiveColor = new THREE.Color(emissive);
+  const finalEmissive = isHovered ? emissiveIntensity * 2.0 : emissiveIntensity;
+
+  // Conical taper
+  const headerRadiusTop = pipeRadius * 1.4;
+  const headerRadiusBot = pipeRadius * 1.75;
 
   // Tiny random offsets for hand-made feeling
   const pipeOffsets = useMemo(() => {
@@ -143,33 +149,51 @@ function MiniRadiatorModel({ type, isHovered }: MiniRadiatorProps) {
     return offsets;
   }, [pipesCount, type]);
 
+  const mat = { color, metalness, roughness, emissive: emissiveColor, emissiveIntensity: finalEmissive };
+
   return (
     <group ref={groupRef}>
-      {/* Upper Pipe */}
+      {/* 1. Upper Conical Pipe */}
       <mesh position={[0, height / 2, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[pipeRadius * 1.6, pipeRadius * 1.6, width + 0.3, 16]} />
-        <meshStandardMaterial
-          color={color}
-          metalness={metalness}
-          roughness={roughness}
-          emissive={new THREE.Color(emissive)}
-          emissiveIntensity={isHovered ? emissiveIntensity * 2.0 : emissiveIntensity}
-        />
+        <cylinderGeometry args={[headerRadiusTop, headerRadiusBot, width + 0.3, 16]} />
+        <meshStandardMaterial {...mat} />
+      </mesh>
+      {/* Capped upper end domes */}
+      <mesh position={[-width / 2 - 0.15, height / 2, 0]}>
+        <sphereGeometry args={[headerRadiusTop, 10, 10]} />
+        <meshStandardMaterial {...mat} />
+      </mesh>
+      <mesh position={[width / 2 + 0.15, height / 2, 0]}>
+        <sphereGeometry args={[headerRadiusBot, 10, 10]} />
+        <meshStandardMaterial {...mat} />
       </mesh>
 
-      {/* Lower Pipe */}
+      {/* 2. Lower Conical Pipe */}
       <mesh position={[0, -height / 2, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[pipeRadius * 1.6, pipeRadius * 1.6, width + 0.3, 16]} />
-        <meshStandardMaterial
-          color={color}
-          metalness={metalness}
-          roughness={roughness}
-          emissive={new THREE.Color(emissive)}
-          emissiveIntensity={isHovered ? emissiveIntensity * 2.0 : emissiveIntensity}
-        />
+        <cylinderGeometry args={[headerRadiusTop, headerRadiusBot, width + 0.3, 16]} />
+        <meshStandardMaterial {...mat} />
+      </mesh>
+      {/* Capped lower end domes */}
+      <mesh position={[-width / 2 - 0.15, -height / 2, 0]}>
+        <sphereGeometry args={[headerRadiusTop, 10, 10]} />
+        <meshStandardMaterial {...mat} />
+      </mesh>
+      <mesh position={[width / 2 + 0.15, -height / 2, 0]}>
+        <sphereGeometry args={[headerRadiusBot, 10, 10]} />
+        <meshStandardMaterial {...mat} />
       </mesh>
 
-      {/* Columns */}
+      {/* 3. Valve detail (left side, lower pipe) */}
+      <mesh position={[-width / 2 - 0.24, -height / 2, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[pipeRadius * 1.4, pipeRadius * 0.36, 7, 14]} />
+        <meshStandardMaterial {...mat} />
+      </mesh>
+      <mesh position={[-width / 2 - 0.24, -height / 2 + 0.1, 0]}>
+        <cylinderGeometry args={[pipeRadius * 0.4, pipeRadius * 0.4, 0.09, 8]} />
+        <meshStandardMaterial {...mat} />
+      </mesh>
+
+      {/* 4. Columns with connection collars */}
       {Array.from({ length: pipesCount }).map((_, index) => {
         const offset = pipeOffsets[index];
         const posX = -width / 2 + index * spacing + offset.x;
@@ -177,15 +201,22 @@ function MiniRadiatorModel({ type, isHovered }: MiniRadiatorProps) {
 
         return (
           <group key={index} position={[posX, 0, posZ]} rotation={[0, 0, offset.rotZ]}>
+            {/* Column tube */}
             <mesh>
               <cylinderGeometry args={[pipeRadius, pipeRadius, height - 0.1, 10]} />
-              <meshStandardMaterial
-                color={color}
-                metalness={metalness}
-                roughness={roughness}
-                emissive={new THREE.Color(emissive)}
-                emissiveIntensity={isHovered ? emissiveIntensity * 2.0 : emissiveIntensity}
-              />
+              <meshStandardMaterial {...mat} />
+            </mesh>
+
+            {/* Torus collar - top */}
+            <mesh position={[0, height / 2 - 0.06, 0]} rotation={[Math.PI / 2, 0, 0]}>
+              <torusGeometry args={[pipeRadius + 0.005, pipeRadius * 0.2, 6, 12]} />
+              <meshStandardMaterial {...mat} />
+            </mesh>
+
+            {/* Torus collar - bottom */}
+            <mesh position={[0, -height / 2 + 0.06, 0]} rotation={[Math.PI / 2, 0, 0]}>
+              <torusGeometry args={[pipeRadius + 0.005, pipeRadius * 0.2, 6, 12]} />
+              <meshStandardMaterial {...mat} />
             </mesh>
           </group>
         );
@@ -201,7 +232,7 @@ export default function ArchiveMiniCanvas({ type, isHovered = false }: MiniRadia
         camera={{ position: [0, 0, 4.0], fov: 45 }}
         gl={{ antialias: true }}
       >
-        <ambientLight intensity={0.4} />
+        <ambientLight intensity={0.35} />
         
         {/* Warm keylight */}
         <directionalLight position={[3, 3, 2]} intensity={1.2} color="#E8D9C8" />
@@ -209,8 +240,13 @@ export default function ArchiveMiniCanvas({ type, isHovered = false }: MiniRadia
         {/* Cool backlight */}
         <directionalLight position={[-3, -1, -2]} intensity={0.6} color="#9B8D82" />
         
-        {/* Soft glowing pointlight */}
-        <pointLight position={[0, 0, -1]} intensity={0.8} color="#C45C26" distance={4} />
+        {/* Soft glowing pointlight - increases intensity on hover */}
+        <pointLight
+          position={[0, 0, -1]}
+          intensity={isHovered ? 1.6 : 0.8}
+          color="#FF6B35"
+          distance={4}
+        />
 
         <MiniRadiatorModel type={type} isHovered={isHovered} />
       </Canvas>

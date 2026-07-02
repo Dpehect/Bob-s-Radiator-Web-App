@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useRef, useMemo, useState, useEffect } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, ThreeEvent } from "@react-three/fiber";
 import { Center } from "@react-three/drei";
-import { EffectComposer, Bloom } from "@react-three/postprocessing";
+import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
 import * as THREE from "three";
 import { useHeatStore } from "@/store/useHeatStore";
+import BackdropShimmer from "./BackdropShimmer";
+import gsap from "gsap";
 
 // Simple deterministic PRNG for React 19 render purity
 const createPRNG = (seed: number) => {
@@ -94,7 +96,6 @@ function HeatParticles({ count = 35 }) {
     const pos = new Float32Array(count * 3);
     const rand = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
-      // Spawn particles inside a volume enclosing the radiator
       pos[i * 3] = (random() - 0.5) * 4.2;     // X spread
       pos[i * 3 + 1] = (random() - 0.5) * 5.0; // Y spread (will loop in vertex shader)
       pos[i * 3 + 2] = (random() - 0.5) * 0.8; // Z depth spread
@@ -148,7 +149,11 @@ function HeatParticles({ count = 35 }) {
 
 function RadiatorModel({ isMobile = false }: { isMobile?: boolean }) {
   const groupRef = useRef<THREE.Group>(null);
+  const burstPointsRef = useRef<THREE.Points>(null);
+  const burstParticlesRef = useRef<{ pos: THREE.Vector3; vel: THREE.Vector3; age: number; maxAge: number }[]>([]);
+  
   const heatLevel = useHeatStore((state) => state.heatLevel);
+  const increaseHeat = useHeatStore((state) => state.increaseHeat);
   const heatRatio = heatLevel / 100;
 
   // Track cursor to do parallax tilting
@@ -172,7 +177,121 @@ function RadiatorModel({ isMobile = false }: { isMobile?: boolean }) {
       targetZ,
       0.04
     );
+
+    // Update burst particles
+    const particles = burstParticlesRef.current;
+    const pointsMesh = burstPointsRef.current;
+    
+    if (particles.length > 0) {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.age += delta;
+        if (p.age >= p.maxAge) {
+          particles.splice(i, 1);
+          continue;
+        }
+        p.pos.addScaledVector(p.vel, delta);
+        p.vel.y -= 2.5 * delta; // gravity pull
+        p.vel.multiplyScalar(0.95); // air drag
+      }
+
+      if (pointsMesh) {
+        const geom = pointsMesh.geometry;
+        const posAttr = geom.getAttribute("position") as THREE.BufferAttribute;
+        const arr = posAttr.array as Float32Array;
+        
+        for (let i = 0; i < 200; i++) {
+          if (i < particles.length) {
+            const p = particles[i];
+            arr[i * 3] = p.pos.x;
+            arr[i * 3 + 1] = p.pos.y;
+            arr[i * 3 + 2] = p.pos.z;
+          } else {
+            arr[i * 3] = 9999;
+            arr[i * 3 + 1] = 9999;
+            arr[i * 3 + 2] = 9999;
+          }
+        }
+        posAttr.needsUpdate = true;
+      }
+    } else if (pointsMesh) {
+      const geom = pointsMesh.geometry;
+      const posAttr = geom.getAttribute("position") as THREE.BufferAttribute;
+      const arr = posAttr.array as Float32Array;
+      if (arr[0] !== 9999) {
+        for (let i = 0; i < 200; i++) {
+          arr[i * 3] = 9999;
+          arr[i * 3 + 1] = 9999;
+          arr[i * 3 + 2] = 9999;
+        }
+        posAttr.needsUpdate = true;
+      }
+    }
   });
+
+  // Short GSAP shaking timeline
+  const triggerShake = () => {
+    if (!groupRef.current) return;
+    gsap.timeline()
+      .to(groupRef.current.scale, {
+        x: 1.05,
+        y: 0.96,
+        z: 1.05,
+        duration: 0.08,
+        ease: "power2.out"
+      })
+      .to(groupRef.current.rotation, {
+        z: 0.03,
+        duration: 0.05,
+        repeat: 3,
+        yoyo: true,
+        ease: "none"
+      })
+      .to(groupRef.current.scale, {
+        x: 1,
+        y: 1,
+        z: 1,
+        duration: 0.45,
+        ease: "elastic.out(1.2, 0.4)"
+      })
+      .to(groupRef.current.rotation, {
+        z: 0,
+        duration: 0.35,
+        ease: "elastic.out(1, 0.5)"
+      }, "<");
+  };
+
+  const triggerBurst = (clickPoint?: THREE.Vector3) => {
+    const origin = clickPoint || new THREE.Vector3(0, 0, 0);
+    const particles = burstParticlesRef.current;
+    
+    // Add 25 new burst particles
+    for (let i = 0; i < 25; i++) {
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos((Math.random() * 2) - 1);
+      const speed = 0.6 + Math.random() * 2.2;
+
+      const vel = new THREE.Vector3(
+        Math.sin(phi) * Math.cos(theta) * speed,
+        Math.abs(Math.sin(phi) * Math.sin(theta)) * speed * 1.6 + 0.8, // push upwards
+        Math.cos(phi) * speed
+      );
+
+      particles.push({
+        pos: origin.clone(),
+        vel: vel,
+        age: 0,
+        maxAge: 0.4 + Math.random() * 0.4,
+      });
+    }
+  };
+
+  const handleClick = (e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation();
+    triggerShake();
+    triggerBurst(e.point);
+    increaseHeat(8);
+  };
 
   // Radiator dimensions & structure config
   const pipesCount = 8;
@@ -199,35 +318,129 @@ function RadiatorModel({ isMobile = false }: { isMobile?: boolean }) {
   // Heated metal is an active glowing warmth (#C45C26)
   const baseColor = new THREE.Color("#241F1B");
   const hotColor = new THREE.Color("#C45C26");
-  const currentColor = baseColor.clone().lerp(hotColor, heatRatio);
+  const currentColor = baseColor.clone().lerp(hotColor, heatRatio * 0.55);
+
+  // Dynamic metallic stats based on heat
+  const metalness = 0.88;
+  const roughness = 0.38 - heatRatio * 0.12;
+  const emissiveColor = new THREE.Color("#FF6B35");
+  const emissiveIntensity = heatRatio * 1.25;
 
   return (
-    <group ref={groupRef}>
-      {/* 1. Header Tube (Upper Horizontal Pipe) */}
+    <group ref={groupRef} onClick={handleClick}>
+      {/* 1. Conical Header Tube (Upper Horizontal Pipe) */}
       <mesh position={[0, 1.45, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.13, 0.13, width + 0.5, isMobile ? 12 : 32]} />
+        <cylinderGeometry args={[0.11, 0.14, width + 0.5, isMobile ? 12 : 32]} />
         <meshStandardMaterial
-          metalness={0.82}
-          roughness={0.38}
+          metalness={metalness}
+          roughness={roughness}
           color={currentColor}
-          emissive={hotColor}
-          emissiveIntensity={heatRatio * 0.65}
+          emissive={emissiveColor}
+          emissiveIntensity={emissiveIntensity}
+          envMapIntensity={1.0}
+        />
+      </mesh>
+      {/* Capped upper end domes */}
+      <mesh position={[-width / 2 - 0.25, 1.45, 0]}>
+        <sphereGeometry args={[0.11, 16, 16]} />
+        <meshStandardMaterial
+          metalness={metalness}
+          roughness={roughness}
+          color={currentColor}
+          emissive={emissiveColor}
+          emissiveIntensity={emissiveIntensity}
+        />
+      </mesh>
+      <mesh position={[width / 2 + 0.25, 1.45, 0]}>
+        <sphereGeometry args={[0.14, 16, 16]} />
+        <meshStandardMaterial
+          metalness={metalness}
+          roughness={roughness}
+          color={currentColor}
+          emissive={emissiveColor}
+          emissiveIntensity={emissiveIntensity}
         />
       </mesh>
 
-      {/* 2. Footer Tube (Lower Horizontal Pipe) */}
+      {/* 2. Conical Footer Tube (Lower Horizontal Pipe) */}
       <mesh position={[0, -1.45, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.13, 0.13, width + 0.5, isMobile ? 12 : 32]} />
+        <cylinderGeometry args={[0.11, 0.14, width + 0.5, isMobile ? 12 : 32]} />
         <meshStandardMaterial
-          metalness={0.82}
-          roughness={0.38}
+          metalness={metalness}
+          roughness={roughness}
           color={currentColor}
-          emissive={hotColor}
-          emissiveIntensity={heatRatio * 0.65}
+          emissive={emissiveColor}
+          emissiveIntensity={emissiveIntensity}
+          envMapIntensity={1.0}
+        />
+      </mesh>
+      {/* Capped lower end domes */}
+      <mesh position={[-width / 2 - 0.25, -1.45, 0]}>
+        <sphereGeometry args={[0.11, 16, 16]} />
+        <meshStandardMaterial
+          metalness={metalness}
+          roughness={roughness}
+          color={currentColor}
+          emissive={emissiveColor}
+          emissiveIntensity={emissiveIntensity}
+        />
+      </mesh>
+      <mesh position={[width / 2 + 0.25, -1.45, 0]}>
+        <sphereGeometry args={[0.14, 16, 16]} />
+        <meshStandardMaterial
+          metalness={metalness}
+          roughness={roughness}
+          color={currentColor}
+          emissive={emissiveColor}
+          emissiveIntensity={emissiveIntensity}
         />
       </mesh>
 
-      {/* 3. Vertical Radiator Columns */}
+      {/* 3. Valve Detayı (On left side of lower pipe) */}
+      {/* Stem pipe */}
+      <mesh position={[-width / 2 - 0.38, -1.45, 0]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.035, 0.035, 0.22, 12]} />
+        <meshStandardMaterial
+          metalness={metalness}
+          roughness={roughness}
+          color={currentColor}
+          emissive={emissiveColor}
+          emissiveIntensity={emissiveIntensity}
+        />
+      </mesh>
+      {/* Valve connector spherical joint */}
+      <mesh position={[-width / 2 - 0.49, -1.45, 0]}>
+        <sphereGeometry args={[0.06, 12, 12]} />
+        <meshStandardMaterial
+          metalness={metalness}
+          roughness={roughness}
+          color={currentColor}
+          emissive={emissiveColor}
+          emissiveIntensity={emissiveIntensity}
+        />
+      </mesh>
+      {/* Hand wheel handle dial */}
+      <mesh position={[-width / 2 - 0.49, -1.32, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.09, 0.022, 8, 20]} />
+        <meshStandardMaterial
+          metalness={metalness}
+          roughness={roughness}
+          color={currentColor}
+          emissive={emissiveColor}
+          emissiveIntensity={emissiveIntensity}
+        />
+      </mesh>
+      {/* Valve inner pin */}
+      <mesh position={[-width / 2 - 0.49, -1.38, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.02, 0.02, 0.12, 8]} />
+        <meshStandardMaterial
+          metalness={metalness}
+          roughness={roughness}
+          color={currentColor}
+        />
+      </mesh>
+
+      {/* 4. Vertical Radiator Columns with Connection Toruses */}
       {Array.from({ length: pipesCount }).map((_, index) => {
         const offset = pipeOffsets[index];
         const posX = -width / 2 + index * spacing + offset.x;
@@ -239,21 +452,64 @@ function RadiatorModel({ isMobile = false }: { isMobile?: boolean }) {
             position={[posX, 0, posZ]}
             rotation={[offset.rotX, 0, offset.rotZ]}
           >
+            {/* Vertical Column */}
             <mesh>
               <cylinderGeometry args={[0.075, 0.075, 2.8, isMobile ? 6 : 16]} />
               <meshStandardMaterial
-                metalness={0.82}
-                roughness={0.38}
+                metalness={metalness}
+                roughness={roughness}
                 color={currentColor}
-                emissive={hotColor}
-                emissiveIntensity={heatRatio * 0.65}
+                emissive={emissiveColor}
+                emissiveIntensity={emissiveIntensity}
+                envMapIntensity={1.0}
+              />
+            </mesh>
+
+            {/* Torus Collar - Top Connection */}
+            <mesh position={[0, 1.35, 0]} rotation={[Math.PI / 2, 0, 0]}>
+              <torusGeometry args={[0.078, 0.016, 8, 16]} />
+              <meshStandardMaterial
+                metalness={metalness}
+                roughness={roughness}
+                color={currentColor}
+                emissive={emissiveColor}
+                emissiveIntensity={emissiveIntensity}
+              />
+            </mesh>
+
+            {/* Torus Collar - Bottom Connection */}
+            <mesh position={[0, -1.35, 0]} rotation={[Math.PI / 2, 0, 0]}>
+              <torusGeometry args={[0.078, 0.016, 8, 16]} />
+              <meshStandardMaterial
+                metalness={metalness}
+                roughness={roughness}
+                color={currentColor}
+                emissive={emissiveColor}
+                emissiveIntensity={emissiveIntensity}
               />
             </mesh>
           </group>
         );
       })}
 
-      {/* 4. Rising Heat Particles enclosing the model */}
+      {/* 5. Click Burst Particles Points Mesh */}
+      <points ref={burstPointsRef}>
+        <bufferGeometry>
+          <bufferAttribute
+            attach="attributes-position"
+            args={[new Float32Array(200 * 3).fill(9999), 3]}
+          />
+        </bufferGeometry>
+        <pointsMaterial
+          color="#FF7034"
+          size={isMobile ? 0.08 : 0.12}
+          transparent
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </points>
+
+      {/* 6. Rising Heat Particles enclosing the model */}
       <HeatParticles count={isMobile ? 15 : 40} />
     </group>
   );
@@ -261,6 +517,8 @@ function RadiatorModel({ isMobile = false }: { isMobile?: boolean }) {
 
 export default function RadiatorCanvas() {
   const [isMobile, setIsMobile] = useState(false);
+  const heatLevel = useHeatStore((state) => state.heatLevel);
+  const heatRatio = heatLevel / 100;
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -269,21 +527,29 @@ export default function RadiatorCanvas() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  const pointLightColor = useMemo(() => {
+    const coolColor = new THREE.Color("#C45C26");
+    const hotColor = new THREE.Color("#FF3B00");
+    return coolColor.lerp(hotColor, heatRatio);
+  }, [heatRatio]);
+
   return (
     <div className="w-full h-full min-h-[500px] md:min-h-[600px] relative select-none">
       <Canvas
         camera={{ position: [0, 0, 5], fov: 45 }}
         gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping }}
       >
-        
-        {/* Lights */}
-        <ambientLight intensity={0.4} />
+        {/* Lights - Dynamic warmth based on global heat store */}
+        <ambientLight intensity={0.3 + heatRatio * 0.2} />
         
         {/* Warm key light */}
         <directionalLight position={[5, 5, 4]} intensity={1.5} color="#E8D9C8" />
         
         {/* Glowing radiator red-hot backlight */}
-        <pointLight position={[0, 0, -2]} intensity={2.0} color="#C45C26" distance={8} />
+        <pointLight position={[0, 0, -2]} intensity={1.5 + heatRatio * 2.0} color={pointLightColor} distance={8} />
+
+        {/* Shimmer background shader */}
+        <BackdropShimmer />
 
         <Center>
           <RadiatorModel isMobile={isMobile} />
@@ -298,6 +564,7 @@ export default function RadiatorCanvas() {
               height={300}
               intensity={1.2}
             />
+            <Vignette eskil={false} offset={0.15} darkness={1.1} />
           </EffectComposer>
         )}
       </Canvas>
