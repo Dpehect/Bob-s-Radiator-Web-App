@@ -17,7 +17,17 @@ const createPRNG = (seed: number) => {
   };
 };
 
-function ForgeRadiatorModel({ isMobile = false }: { isMobile?: boolean }) {
+interface SharedGeometries {
+  cylinder: THREE.CylinderGeometry;
+  sphere: THREE.SphereGeometry;
+  torus: THREE.TorusGeometry;
+}
+
+interface ForgeRadiatorModelProps {
+  geoms: SharedGeometries;
+}
+
+function ForgeRadiatorModel({ geoms }: ForgeRadiatorModelProps) {
   const groupRef = useRef<THREE.Group>(null);
   const forgeProgress = useHeatStore((state) => state.forgeProgress);
   const heatLevel = useHeatStore((state) => state.heatLevel);
@@ -56,10 +66,6 @@ function ForgeRadiatorModel({ isMobile = false }: { isMobile?: boolean }) {
   const headerRadius = 0.15 - 0.06 * forgeProgress;   // 0.15 -> 0.09
   const columnRadius = 0.085 - 0.045 * forgeProgress; // 0.085 -> 0.04
 
-  // Taper parameters for conical look
-  const radiusLeft = headerRadius - 0.018 * (1.0 - forgeProgress);
-  const radiusRight = headerRadius + 0.015 * (1.0 - forgeProgress);
-
   // 3. Material Properties: Matte copper-black (1952) -> Sleek brushed brass (2025)
   const color1952 = new THREE.Color("#2E1911"); // rough oxidized copper-iron
   const color2025 = new THREE.Color("#B3985C"); // warm satin brass gold
@@ -90,8 +96,12 @@ function ForgeRadiatorModel({ isMobile = false }: { isMobile?: boolean }) {
   return (
     <group ref={groupRef}>
       {/* 1. Upper Horizontal Pipe */}
-      <mesh position={[0, 1.4, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[radiusLeft, radiusRight, width + 0.4, isMobile ? 12 : 32]} />
+      <mesh
+        geometry={geoms.cylinder}
+        position={[0, 1.4, 0]}
+        rotation={[0, 0, Math.PI / 2]}
+        scale={[headerRadius, width + 0.4, headerRadius]}
+      >
         <meshStandardMaterial
           color={currentColor}
           metalness={metalness}
@@ -101,8 +111,11 @@ function ForgeRadiatorModel({ isMobile = false }: { isMobile?: boolean }) {
         />
       </mesh>
       {/* Capped upper end domes */}
-      <mesh position={[-width / 2 - 0.2, 1.4, 0]}>
-        <sphereGeometry args={[radiusLeft, 12, 12]} />
+      <mesh
+        geometry={geoms.sphere}
+        position={[-width / 2 - 0.2, 1.4, 0]}
+        scale={[headerRadius, headerRadius, headerRadius]}
+      >
         <meshStandardMaterial
           color={currentColor}
           metalness={metalness}
@@ -111,8 +124,11 @@ function ForgeRadiatorModel({ isMobile = false }: { isMobile?: boolean }) {
           emissiveIntensity={emissiveIntensity}
         />
       </mesh>
-      <mesh position={[width / 2 + 0.2, 1.4, 0]}>
-        <sphereGeometry args={[radiusRight, 12, 12]} />
+      <mesh
+        geometry={geoms.sphere}
+        position={[width / 2 + 0.2, 1.4, 0]}
+        scale={[headerRadius, headerRadius, headerRadius]}
+      >
         <meshStandardMaterial
           color={currentColor}
           metalness={metalness}
@@ -123,8 +139,12 @@ function ForgeRadiatorModel({ isMobile = false }: { isMobile?: boolean }) {
       </mesh>
 
       {/* 2. Lower Horizontal Pipe */}
-      <mesh position={[0, -1.4, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[radiusLeft, radiusRight, width + 0.4, isMobile ? 12 : 32]} />
+      <mesh
+        geometry={geoms.cylinder}
+        position={[0, -1.4, 0]}
+        rotation={[0, 0, Math.PI / 2]}
+        scale={[headerRadius, width + 0.4, headerRadius]}
+      >
         <meshStandardMaterial
           color={currentColor}
           metalness={metalness}
@@ -134,8 +154,11 @@ function ForgeRadiatorModel({ isMobile = false }: { isMobile?: boolean }) {
         />
       </mesh>
       {/* Capped lower end domes */}
-      <mesh position={[-width / 2 - 0.2, -1.4, 0]}>
-        <sphereGeometry args={[radiusLeft, 12, 12]} />
+      <mesh
+        geometry={geoms.sphere}
+        position={[-width / 2 - 0.2, -1.4, 0]}
+        scale={[headerRadius, headerRadius, headerRadius]}
+      >
         <meshStandardMaterial
           color={currentColor}
           metalness={metalness}
@@ -144,8 +167,11 @@ function ForgeRadiatorModel({ isMobile = false }: { isMobile?: boolean }) {
           emissiveIntensity={emissiveIntensity}
         />
       </mesh>
-      <mesh position={[width / 2 + 0.2, -1.4, 0]}>
-        <sphereGeometry args={[radiusRight, 12, 12]} />
+      <mesh
+        geometry={geoms.sphere}
+        position={[width / 2 + 0.2, -1.4, 0]}
+        scale={[headerRadius, headerRadius, headerRadius]}
+      >
         <meshStandardMaterial
           color={currentColor}
           metalness={metalness}
@@ -155,10 +181,13 @@ function ForgeRadiatorModel({ isMobile = false }: { isMobile?: boolean }) {
         />
       </mesh>
 
-      {/* 3. Valve Detayı (On left side of lower pipe) */}
-      {/* Stem pipe */}
-      <mesh position={[-width / 2 - 0.3, -1.4, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[columnRadius * 0.9, columnRadius * 0.9, 0.18, 12]} />
+      {/* 3. Valve Detayı */}
+      <mesh
+        geometry={geoms.cylinder}
+        position={[-width / 2 - 0.3, -1.4, 0]}
+        rotation={[0, 0, Math.PI / 2]}
+        scale={[columnRadius * 0.9, 0.18, columnRadius * 0.9]}
+      >
         <meshStandardMaterial
           color={currentColor}
           metalness={metalness}
@@ -167,9 +196,11 @@ function ForgeRadiatorModel({ isMobile = false }: { isMobile?: boolean }) {
           emissiveIntensity={emissiveIntensity}
         />
       </mesh>
-      {/* Valve connector spherical joint */}
-      <mesh position={[-width / 2 - 0.39, -1.4, 0]}>
-        <sphereGeometry args={[columnRadius * 1.5, 12, 12]} />
+      <mesh
+        geometry={geoms.sphere}
+        position={[-width / 2 - 0.39, -1.4, 0]}
+        scale={[columnRadius * 1.5, columnRadius * 1.5, columnRadius * 1.5]}
+      >
         <meshStandardMaterial
           color={currentColor}
           metalness={metalness}
@@ -178,9 +209,12 @@ function ForgeRadiatorModel({ isMobile = false }: { isMobile?: boolean }) {
           emissiveIntensity={emissiveIntensity}
         />
       </mesh>
-      {/* Hand wheel handle dial */}
-      <mesh position={[-width / 2 - 0.39, -1.28, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[columnRadius * 2.2, columnRadius * 0.5, 8, 20]} />
+      <mesh
+        geometry={geoms.torus}
+        position={[-width / 2 - 0.39, -1.28, 0]}
+        rotation={[Math.PI / 2, 0, 0]}
+        scale={[columnRadius * 2.2, columnRadius * 2.2, columnRadius * 2.2]}
+      >
         <meshStandardMaterial
           color={currentColor}
           metalness={metalness}
@@ -203,8 +237,10 @@ function ForgeRadiatorModel({ isMobile = false }: { isMobile?: boolean }) {
             rotation={[offset.rotX, 0, offset.rotZ]}
           >
             {/* Vertical Column */}
-            <mesh>
-              <cylinderGeometry args={[columnRadius, columnRadius, 2.7, isMobile ? 6 : 16]} />
+            <mesh
+              geometry={geoms.cylinder}
+              scale={[columnRadius, 2.7, columnRadius]}
+            >
               <meshStandardMaterial
                 color={currentColor}
                 metalness={metalness}
@@ -215,8 +251,12 @@ function ForgeRadiatorModel({ isMobile = false }: { isMobile?: boolean }) {
             </mesh>
 
             {/* Torus Collar - Top Connection */}
-            <mesh position={[0, 1.3, 0]} rotation={[Math.PI / 2, 0, 0]}>
-              <torusGeometry args={[columnRadius + 0.007, columnRadius * 0.22, 8, 16]} />
+            <mesh
+              geometry={geoms.torus}
+              position={[0, 1.3, 0]}
+              rotation={[Math.PI / 2, 0, 0]}
+              scale={[columnRadius + 0.007, columnRadius + 0.007, columnRadius + 0.007]}
+            >
               <meshStandardMaterial
                 color={currentColor}
                 metalness={metalness}
@@ -227,8 +267,12 @@ function ForgeRadiatorModel({ isMobile = false }: { isMobile?: boolean }) {
             </mesh>
 
             {/* Torus Collar - Bottom Connection */}
-            <mesh position={[0, -1.3, 0]} rotation={[Math.PI / 2, 0, 0]}>
-              <torusGeometry args={[columnRadius + 0.007, columnRadius * 0.22, 8, 16]} />
+            <mesh
+              geometry={geoms.torus}
+              position={[0, -1.3, 0]}
+              rotation={[Math.PI / 2, 0, 0]}
+              scale={[columnRadius + 0.007, columnRadius + 0.007, columnRadius + 0.007]}
+            >
               <meshStandardMaterial
                 color={currentColor}
                 metalness={metalness}
@@ -255,6 +299,23 @@ export default function ForgeRadiatorCanvas() {
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  const sharedGeoms = useMemo(() => {
+    const radialSegments = isMobile ? 12 : 24;
+    return {
+      cylinder: new THREE.CylinderGeometry(1, 1, 1, radialSegments),
+      sphere: new THREE.SphereGeometry(1, 12, 12),
+      torus: new THREE.TorusGeometry(1, 0.22, 6, 12),
+    };
+  }, [isMobile]);
+
+  useEffect(() => {
+    return () => {
+      sharedGeoms.cylinder.dispose();
+      sharedGeoms.sphere.dispose();
+      sharedGeoms.torus.dispose();
+    };
+  }, [sharedGeoms]);
 
   const pointLightColor = useMemo(() => {
     const coolColor = new THREE.Color("#C45C26");
@@ -284,7 +345,7 @@ export default function ForgeRadiatorCanvas() {
         <BackdropShimmer />
 
         <Center>
-          <ForgeRadiatorModel isMobile={isMobile} />
+          <ForgeRadiatorModel geoms={sharedGeoms} />
         </Center>
 
         {/* Dynamic Glow Bloom - bypass on mobile for performance */}
