@@ -19,444 +19,645 @@ type RadType = "classic" | "wave" | "tower";
 type RadSurface = "brass" | "black" | "terracotta" | "copper";
 type RadHeight = "low" | "mid" | "tall";
 
+const TYPE_LABELS: Record<RadType, { name: string; desc: string }> = {
+  classic: { name: "Klasik", desc: "Atölye döküm" },
+  wave: { name: "Dalga", desc: "Organik form" },
+  tower: { name: "Kule", desc: "İnce dikey" },
+};
+
+const SURFACE_LABELS: Record<RadSurface, { name: string; hex: string }> = {
+  brass: { name: "Ham Pirinç", hex: "#C3AC5B" },
+  black: { name: "Mat Siyah Demir", hex: "#202022" },
+  terracotta: { name: "Kızıl Toprak", hex: "#8D3E31" },
+  copper: { name: "Eskimiş Bakır", hex: "#B2694E" },
+};
+
+const HEIGHT_LABELS: Record<RadHeight, { name: string; sub: string }> = {
+  low: { name: "1.5m", sub: "Alçak" },
+  mid: { name: "2.2m", sub: "Standart" },
+  tall: { name: "3.3m", sub: "Yüksek" },
+};
+
+// Luxurious selector button with hover micro-animation
+function SelectorBtn({
+  active,
+  onClick,
+  children,
+  accent,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+  accent?: string;
+}) {
+  return (
+    <motion.button
+      onClick={onClick}
+      whileHover={{ scale: 1.015, y: -1 }}
+      whileTap={{ scale: 0.975 }}
+      transition={{ type: "spring", stiffness: 380, damping: 22 }}
+      className={`relative py-2.5 px-3 text-[10px] uppercase tracking-[0.18em] font-sans border transition-none rounded-none cursor-pointer font-medium overflow-hidden group ${
+        active
+          ? "border-[#C45C26]/70 text-[#C45C26] bg-[#C45C26]/[0.04]"
+          : "border-white/8 text-white/45 hover:border-white/20 hover:text-white/80"
+      }`}
+    >
+      {/* Active glow line at bottom */}
+      {active && (
+        <motion.span
+          layoutId="selector-active-line"
+          className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-[#C45C26]"
+          style={{ originX: 0 }}
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: 1 }}
+          transition={{ duration: 0.3, ease: [0.25, 1, 0.5, 1] }}
+        />
+      )}
+
+      {/* Hover fill sweep */}
+      <span className="absolute inset-0 bg-white/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
+      {/* Color swatch for surface options */}
+      {accent && (
+        <span
+          className="inline-block w-1.5 h-1.5 rounded-full mr-1.5 align-middle border border-white/10"
+          style={{ backgroundColor: accent }}
+        />
+      )}
+      {children}
+    </motion.button>
+  );
+}
+
 export default function TheLivingKiln() {
   const heatLevel = useHeatStore((state) => state.heatLevel);
   const updateGlobalHeat = useHeatStore((state) => state.updateGlobalHeat);
 
-  // Local configurator options
   const [type, setType] = useState<RadType>("classic");
   const [surface, setSurface] = useState<RadSurface>("brass");
   const [height, setHeight] = useState<RadHeight>("mid");
-
-  // Name entry state for Certificate
   const [showNamingModal, setShowNamingModal] = useState(false);
   const [designerName, setDesignerName] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  // Generate Certificate Image via HTML Canvas & trigger download
+  // Heavy-weighted certificate generator
   const handleGenerateCertificate = () => {
     if (!designerName.trim()) return;
     setIsGenerating(true);
 
     setTimeout(() => {
-      // Create offscreen canvas
       const canvas = document.createElement("canvas");
-      canvas.width = 1200;
-      canvas.height = 900;
+      canvas.width = 1600;
+      canvas.height = 1040;
       const ctx = canvas.getContext("2d");
-      if (!ctx) return;
+      if (!ctx) { setIsGenerating(false); return; }
 
-      // 1. Draw Background (matte warm cream #F3ECE6)
-      ctx.fillStyle = "#F3ECE6";
+      // ── 1. Background ────────────────────────────────────────────────────
+      // Parchment gradient
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      bgGrad.addColorStop(0, "#F5EDE2");
+      bgGrad.addColorStop(1, "#EDE0D4");
+      ctx.fillStyle = bgGrad;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // 2. Draw outer double borders (dark steel #1C1814)
+      // Subtle texture dots overlay
+      for (let i = 0; i < 4000; i++) {
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * canvas.height;
+        ctx.fillStyle = `rgba(28, 24, 20, ${Math.random() * 0.025})`;
+        ctx.fillRect(x, y, 1, 1);
+      }
+
+      // ── 2. Borders ────────────────────────────────────────────────────────
+      // Outer thick border
       ctx.strokeStyle = "#1C1814";
-      ctx.lineWidth = 4;
-      ctx.strokeRect(30, 30, canvas.width - 60, canvas.height - 60);
-      
-      ctx.lineWidth = 1;
-      ctx.strokeRect(40, 40, canvas.width - 80, canvas.height - 80);
+      ctx.lineWidth = 6;
+      ctx.strokeRect(28, 28, canvas.width - 56, canvas.height - 56);
 
-      // 3. Draw Corner Accents
-      const drawCorner = (x: number, y: number, rX: number, rY: number) => {
-        ctx.beginPath();
-        ctx.moveTo(x, y + rY);
-        ctx.lineTo(x, y);
-        ctx.lineTo(x + rX, y);
-        ctx.strokeStyle = "#C45C26";
-        ctx.lineWidth = 3;
-        ctx.stroke();
-      };
-      drawCorner(45, 45, 40, 40);
-      drawCorner(canvas.width - 45, 45, -40, 40);
-      drawCorner(45, canvas.height - 45, 40, -40);
-      drawCorner(canvas.width - 45, canvas.height - 45, -40, -40);
-
-      // 4. Draw Header
-      ctx.fillStyle = "#1C1814";
-      ctx.textAlign = "center";
-      ctx.font = "italic 32px serif";
-      ctx.fillText("BOB'S RADIATOR  •  EST 1952  •  KARAKÖY", canvas.width / 2, 130);
-
-      // Divider line
-      ctx.beginPath();
-      ctx.moveTo(300, 160);
-      ctx.lineTo(900, 160);
-      ctx.strokeStyle = "rgba(28, 24, 20, 0.15)";
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      // Certificate Title
-      ctx.fillStyle = "#C45C26";
-      ctx.font = "bold 64px serif";
-      ctx.fillText("ISI VE MİRAS SERTİFİKASI", canvas.width / 2, 250);
-
-      // Body text
-      ctx.fillStyle = "#1C1814";
-      ctx.font = "normal 24px sans-serif";
-      ctx.fillText("Bu vesile ile Bob'un dökümhanesinden çıkan ve aşağıda parametreleri", canvas.width / 2, 340);
-      ctx.fillText("belirtilen termal heykelin özgün tasarımı tescil edilmiştir.", canvas.width / 2, 385);
-
-      // Designer name container
-      ctx.fillStyle = "#1C1814";
-      ctx.font = "bold italic 44px serif";
-      ctx.fillText(`“ ${designerName.toUpperCase()} ”`, canvas.width / 2, 480);
-
-      ctx.beginPath();
-      ctx.moveTo(400, 510);
-      ctx.lineTo(800, 510);
-      ctx.strokeStyle = "#C45C26";
+      // Inner thin border
       ctx.lineWidth = 1.5;
-      ctx.stroke();
+      ctx.strokeStyle = "rgba(28, 24, 20, 0.35)";
+      ctx.strokeRect(46, 46, canvas.width - 92, canvas.height - 92);
 
-      ctx.fillStyle = "rgba(28, 24, 20, 0.5)";
-      ctx.font = "normal 16px sans-serif";
-      ctx.fillText("Tasarımcı ve Isı Ortağı", canvas.width / 2, 540);
+      // Orange inner accent border
+      ctx.strokeStyle = "rgba(196, 92, 38, 0.18)";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(52, 52, canvas.width - 104, canvas.height - 104);
 
-      // 5. Specs Grid
-      const getSurfaceName = (s: string) => {
-        switch (s) {
-          case "brass": return "Ham Fırçalanmış Pirinç";
-          case "black": return "Mat Döküm Demir";
-          case "terracotta": return "Kızıl Toprak Pigment";
-          default: return "Eskimiş Elektrolitik Bakır";
-        }
-      };
+      // ── 3. Corner Ornaments ───────────────────────────────────────────────
+      const cornerLen = 60;
+      const corners = [
+        [50, 50, 1, 1],
+        [canvas.width - 50, 50, -1, 1],
+        [50, canvas.height - 50, 1, -1],
+        [canvas.width - 50, canvas.height - 50, -1, -1],
+      ] as [number, number, number, number][];
 
-      const getTypeName = (t: string) => {
-        switch (t) {
-          case "wave": return "Organik Dalga Gövde";
-          case "tower": return "İnce Dikey Kolon";
-          default: return "Klasik Atölye Tipi";
-        }
-      };
+      for (const [cx, cy, dx, dy] of corners) {
+        ctx.strokeStyle = "#C45C26";
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(cx + dx * cornerLen, cy);
+        ctx.lineTo(cx, cy);
+        ctx.lineTo(cx, cy + dy * cornerLen);
+        ctx.stroke();
+        // Small filled square at corner
+        ctx.fillStyle = "#C45C26";
+        ctx.fillRect(cx - 3 * Math.abs(dx) * dx, cy - 3 * Math.abs(dy) * dy, 5 * dx, 5 * dy);
+      }
 
-      const getHeightName = (h: string) => {
-        switch (h) {
-          case "low": return "1.5 Metre (Alçak)";
-          case "tall": return "3.3 Metre (Yüksek)";
-          default: return "2.2 Metre (Standart)";
-        }
-      };
-
-      ctx.fillStyle = "#1C1814";
-      ctx.font = "bold 20px sans-serif";
-      ctx.textAlign = "left";
-      const startX = 220;
-      
-      ctx.fillText(`Yapı Modeli:  ${getTypeName(type)}`, startX, 640);
-      ctx.fillText(`Yüzey Dokusu: ${getSurfaceName(surface)}`, startX, 690);
-      ctx.fillText(`Heykel Boyutu: ${getHeightName(height)}`, startX, 740);
-
-      ctx.textAlign = "right";
-      const rightX = 980;
-      ctx.fillText(`Enerji İndeksi:  ${heatLevel}°C`, rightX, 640);
-      ctx.fillText(`Miras Kayıt No:  #${Math.floor(Math.random() * 90000 + 10000)}`, rightX, 690);
-      ctx.fillText(`Tarih:           ${new Date().toLocaleDateString("tr-TR")}`, rightX, 740);
-
-      // 6. Draw Signature Stamp (Emblem)
-      ctx.beginPath();
-      ctx.arc(canvas.width / 2, 700, 60, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(196, 92, 38, 0.4)";
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      ctx.fillStyle = "#C45C26";
+      // ── 4. Header ─────────────────────────────────────────────────────────
+      // Foundry name — small caps
       ctx.textAlign = "center";
-      ctx.font = "bold 14px sans-serif";
-      ctx.fillText("BOB'S", canvas.width / 2, 690);
-      ctx.font = "bold 10px sans-serif";
-      ctx.fillText("RADIATOR", canvas.width / 2, 705);
-      ctx.font = "bold 10px sans-serif";
-      ctx.fillText("MIRAS 1952", canvas.width / 2, 720);
+      ctx.fillStyle = "#3D2B1F";
+      ctx.font = "500 18px sans-serif";
+      ctx.letterSpacing = "0.35em";
+      ctx.fillText("BOB'S RADIATOR  ·  EST 1952  ·  KARAKÖY, İSTANBUL", canvas.width / 2, 112);
 
-      // 7. Trigger download
+      // Thin horizontal rule
+      ctx.beginPath();
+      ctx.moveTo(200, 138); ctx.lineTo(canvas.width - 200, 138);
+      ctx.strokeStyle = "rgba(28, 24, 20, 0.15)"; ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // ── 5. Certificate Title ──────────────────────────────────────────────
+      ctx.font = "italic bold 76px serif";
+      ctx.fillStyle = "#C45C26";
+      ctx.letterSpacing = "-0.01em";
+      ctx.fillText("Isı ve Miras Sertifikası", canvas.width / 2, 240);
+
+      // Number label
+      const certNumber = `#${String(Math.floor(Math.random() * 90000 + 10000))}`;
+      ctx.font = "400 14px sans-serif";
+      ctx.fillStyle = "rgba(28,24,20,0.35)";
+      ctx.letterSpacing = "0.15em";
+      ctx.fillText(certNumber, canvas.width / 2, 272);
+
+      // ── 6. Body Text ──────────────────────────────────────────────────────
+      ctx.font = "400 22px serif";
+      ctx.fillStyle = "#3D2B1F";
+      ctx.letterSpacing = "0.01em";
+      ctx.fillText(
+        "Bu vesile ile Bob'un dökümhanesinden çıkan, aşağıda tasarım parametreleri",
+        canvas.width / 2, 340
+      );
+      ctx.fillText(
+        "belirtilen termal heykelin özgün tasarımı tescil ve tescil edilmiştir.",
+        canvas.width / 2, 375
+      );
+
+      // ── 7. Designer name ─────────────────────────────────────────────────
+      ctx.font = "italic bold 52px serif";
+      ctx.fillStyle = "#1C1814";
+      ctx.letterSpacing = "0.02em";
+      ctx.fillText(`" ${designerName.toUpperCase()} "`, canvas.width / 2, 460);
+
+      ctx.beginPath();
+      ctx.moveTo(500, 490); ctx.lineTo(canvas.width - 500, 490);
+      ctx.strokeStyle = "#C45C26"; ctx.lineWidth = 1.5; ctx.stroke();
+
+      ctx.font = "400 16px sans-serif";
+      ctx.fillStyle = "rgba(28,24,20,0.45)";
+      ctx.letterSpacing = "0.25em";
+      ctx.fillText("TASARIMCI · KALORIFER ORTAĞI", canvas.width / 2, 518);
+
+      // ── 8. Specification Grid ─────────────────────────────────────────────
+      const specY = 600;
+      const cols = [
+        { label: "YAPI MODELİ", value: TYPE_LABELS[type].name + " — " + TYPE_LABELS[type].desc },
+        { label: "YÜZEY DOKUSU", value: SURFACE_LABELS[surface].name },
+        { label: "HEYKEL BOYUTU", value: HEIGHT_LABELS[height].name + " (" + HEIGHT_LABELS[height].sub + ")" },
+        { label: "ENERJİ İNDEKSİ", value: `${heatLevel}° ısı` },
+      ];
+
+      const colW = canvas.width / 4;
+      ctx.lineWidth = 1;
+      for (let i = 0; i < cols.length; i++) {
+        const x = colW * i + colW / 2;
+
+        // Column divider
+        if (i > 0) {
+          ctx.beginPath();
+          ctx.moveTo(colW * i, specY - 30);
+          ctx.lineTo(colW * i, specY + 90);
+          ctx.strokeStyle = "rgba(28,24,20,0.12)";
+          ctx.stroke();
+        }
+
+        ctx.textAlign = "center";
+        ctx.font = "600 11px sans-serif";
+        ctx.fillStyle = "#C45C26";
+        ctx.letterSpacing = "0.2em";
+        ctx.fillText(cols[i].label, x, specY);
+
+        ctx.font = "400 17px serif";
+        ctx.fillStyle = "#1C1814";
+        ctx.letterSpacing = "0.02em";
+        ctx.fillText(cols[i].value, x, specY + 36);
+      }
+
+      // Thick separator
+      ctx.beginPath();
+      ctx.moveTo(80, specY + 68); ctx.lineTo(canvas.width - 80, specY + 68);
+      ctx.strokeStyle = "rgba(28,24,20,0.1)"; ctx.lineWidth = 1; ctx.stroke();
+
+      // ── 9. Stamp Circle ───────────────────────────────────────────────────
+      const stampX = canvas.width / 2;
+      const stampY = canvas.height - 165;
+      const stampR = 72;
+
+      ctx.beginPath();
+      ctx.arc(stampX, stampY, stampR, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(196, 92, 38, 0.5)";
+      ctx.lineWidth = 2; ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(stampX, stampY, stampR - 8, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(196, 92, 38, 0.2)";
+      ctx.lineWidth = 1; ctx.stroke();
+
+      ctx.font = "bold 15px sans-serif";
+      ctx.fillStyle = "#C45C26";
+      ctx.letterSpacing = "0.1em";
+      ctx.textAlign = "center";
+      ctx.fillText("BOB'S", stampX, stampY - 10);
+      ctx.font = "bold 11px sans-serif";
+      ctx.fillText("RADIATOR", stampX, stampY + 8);
+      ctx.font = "10px sans-serif";
+      ctx.fillStyle = "rgba(196,92,38,0.65)";
+      ctx.fillText("MIRAS 1952", stampX, stampY + 26);
+
+      // ── 10. Footer Date ───────────────────────────────────────────────────
+      ctx.font = "400 13px sans-serif";
+      ctx.fillStyle = "rgba(28,24,20,0.3)";
+      ctx.letterSpacing = "0.12em";
+      ctx.fillText(new Date().toLocaleDateString("tr-TR", { year: "numeric", month: "long", day: "numeric" }), canvas.width / 2, canvas.height - 56);
+
+      // ── Trigger Download ──────────────────────────────────────────────────
       const dataURL = canvas.toDataURL("image/png");
       const link = document.createElement("a");
-      link.download = `Bob_Radiator_Miras_Sertifikasi_${designerName.replace(/\s+/g, "_")}.png`;
+      link.download = `Bob_Radiator_Sertifika_${designerName.replace(/\s+/g, "_")}.png`;
       link.href = dataURL;
       link.click();
 
-      // 8. Save design to localStorage for Embers Wall
+      // Save to localStorage for Embers Wall
       const newDesign = {
         id: Date.now().toString(),
         name: designerName,
-        type,
-        surface,
-        height,
-        heatLevel,
+        type, surface, height, heatLevel,
         timestamp: new Date().toLocaleDateString("tr-TR"),
       };
-
-      const existingEmbers = localStorage.getItem("bobs_embers");
-      const embersList = existingEmbers ? JSON.parse(existingEmbers) : [];
-      embersList.unshift(newDesign); // add to top
-      localStorage.setItem("bobs_embers", JSON.stringify(embersList));
-
-      // Trigger standard Embers custom event to notify wall in real time
+      const existing = localStorage.getItem("bobs_embers");
+      const list = existing ? JSON.parse(existing) : [];
+      list.unshift(newDesign);
+      localStorage.setItem("bobs_embers", JSON.stringify(list));
       window.dispatchEvent(new Event("embersUpdated"));
 
       setIsGenerating(false);
       setIsSuccess(true);
-      
-      // Reset naming form after success message
       setTimeout(() => {
         setShowNamingModal(false);
         setIsSuccess(false);
         setDesignerName("");
-      }, 2000);
-    }, 1500);
+      }, 2200);
+    }, 1600);
   };
 
   return (
     <section
       id="kiln"
-      className="w-full min-h-screen bg-[#100E0D] py-24 md:py-32 flex flex-col justify-center relative overflow-hidden select-none border-t border-white/5"
+      className="w-full min-h-screen py-24 md:py-32 flex flex-col justify-center relative overflow-hidden select-none border-t border-white/5"
+      style={{ backgroundColor: "#100E0D" }}
     >
-      <div className="absolute inset-0 bg-[#C45C26]/[0.005] blur-3xl pointer-events-none" />
+      {/* Dynamic ambient glow behind section — grows with heat */}
+      <div
+        className="absolute inset-0 pointer-events-none transition-opacity duration-1000"
+        style={{
+          background: `radial-gradient(ellipse 60% 55% at 65% 50%, rgba(196, 92, 38, ${0.03 + (heatLevel / 100) * 0.07}) 0%, transparent 70%)`,
+        }}
+      />
 
       {/* Title */}
-      <div className="w-full max-w-7xl mx-auto px-6 md:px-12 flex flex-col items-start mb-12 relative z-10">
-        <span className="font-sans text-[10px] tracking-[0.3em] uppercase text-[#C45C26] font-semibold mb-3">
-          Configurator
-        </span>
-        <h2 className="font-serif text-5xl md:text-7xl font-bold tracking-tight text-white mb-4">
-          Kendi Ateşini Yak
-        </h2>
-        <p className="font-sans text-sm md:text-base text-white/50 font-light leading-relaxed max-w-xl">
-          Bu radyatör seninle birlikte ısınsın. Atölye döküm kalıplarını seç, metalin dokusuna 
-          ve yüksekliğine karar ver. Isı kadraniyla metali ateşle ve bu tasarımı mirasa kaydet.
-        </p>
+      <div className="w-full max-w-7xl mx-auto px-6 md:px-12 flex flex-col items-start mb-14 relative z-10">
+        <motion.span
+          initial={{ opacity: 0, x: -8 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1] }}
+          className="font-sans text-[10px] tracking-[0.35em] uppercase text-[#C45C26] font-semibold mb-4"
+        >
+          Configurator — Kendi Ateşini Yak
+        </motion.span>
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1.0, ease: [0.25, 1, 0.5, 1], delay: 0.1 }}
+          className="heading-dynamic font-serif text-5xl md:text-7xl font-bold tracking-tight text-white mb-5"
+        >
+          Isı Senin
+          <span className="text-[#C45C26]"> Elinde</span>
+        </motion.h2>
+        <motion.p
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.9, ease: [0.25, 1, 0.5, 1], delay: 0.2 }}
+          className="font-sans text-sm md:text-base text-white/45 font-light leading-relaxed max-w-lg"
+        >
+          Atölye döküm kalıplarını seç. Metalin dokusuna ve yüksekliğine karar ver.
+          Isı kadranıyla metali ateşle. Bu tasarımı Bob&apos;un mirasına yaz.
+        </motion.p>
       </div>
 
-      {/* Main Container Layout */}
-      <div className="w-full max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-12 relative z-10 items-stretch">
-        
-        {/* Left Column: UI Controls (5 Columns) */}
-        <div className="lg:col-span-5 flex flex-col justify-between p-8 border border-white/5 bg-black/10 relative">
+      {/* Main Container */}
+      <div className="w-full max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-10 relative z-10 items-stretch">
+
+        {/* ── Left Controls Panel ── */}
+        <motion.div
+          initial={{ opacity: 0, x: -16 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.9, ease: [0.25, 1, 0.5, 1], delay: 0.15 }}
+          className="lg:col-span-5 flex flex-col justify-between p-8 border border-white/[0.07] relative"
+          style={{
+            backgroundColor: "rgba(16, 12, 10, 0.85)",
+            boxShadow: `inset 0 0 60px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.03)`,
+          }}
+        >
           {/* Corner Trims */}
-          <div className="absolute top-0 left-0 w-2.5 h-2.5 border-t border-l border-white/10" />
-          <div className="absolute top-0 right-0 w-2.5 h-2.5 border-t border-r border-white/10" />
-          <div className="absolute bottom-0 left-0 w-2.5 h-2.5 border-b border-l border-white/10" />
-          <div className="absolute bottom-0 right-0 w-2.5 h-2.5 border-b border-r border-white/10" />
+          {[["top-0 left-0 border-t border-l"], ["top-0 right-0 border-t border-r"], ["bottom-0 left-0 border-b border-l"], ["bottom-0 right-0 border-b border-r"]].map((cls, i) => (
+            <div key={i} className={`absolute w-3 h-3 border-white/15 ${cls[0]}`} />
+          ))}
 
-          {/* Option Groups */}
           <div className="flex flex-col gap-8 w-full">
-            
-            {/* 1. Radiator Type */}
-            <div className="flex flex-col items-start w-full">
-              <span className="font-sans text-[9px] tracking-[0.2em] uppercase text-white/40 mb-3">
-                1. Radyatör Tipi
-              </span>
-              <div className="grid grid-cols-3 gap-2 w-full">
-                {(["classic", "wave", "tower"] as RadType[]).map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setType(t)}
-                    className={`py-2 px-3 text-[10px] uppercase tracking-[0.15em] font-sans border transition-all rounded-none cursor-pointer font-medium ${
-                      type === t
-                        ? "border-[#C45C26] text-[#C45C26] bg-[#C45C26]/5"
-                        : "border-white/5 text-white/50 hover:border-white/20 hover:text-white"
-                    }`}
-                  >
-                    {t === "classic" ? "Klasik" : t === "wave" ? "Dalga" : "Kule"}
-                  </button>
-                ))}
-              </div>
-            </div>
 
-            {/* 2. Surface Coating */}
-            <div className="flex flex-col items-start w-full">
-              <span className="font-sans text-[9px] tracking-[0.2em] uppercase text-white/40 mb-3">
-                2. Yüzey Kaplaması
-              </span>
-              <div className="grid grid-cols-2 gap-2 w-full">
-                {(["brass", "black", "terracotta", "copper"] as RadSurface[]).map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setSurface(s)}
-                    className={`py-2 px-3 text-[10px] uppercase tracking-[0.15em] font-sans border transition-all rounded-none cursor-pointer font-medium ${
-                      surface === s
-                        ? "border-[#C45C26] text-[#C45C26] bg-[#C45C26]/5"
-                        : "border-white/5 text-white/50 hover:border-white/20 hover:text-white"
-                    }`}
-                  >
-                    {s === "brass"
-                      ? "Ham Pirinç"
-                      : s === "black"
-                      ? "Mat Siyah Demir"
-                      : s === "terracotta"
-                      ? "Kızıl Toprak"
-                      : "Eskimiş Bakır"}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 3. Height Configuration */}
-            <div className="flex flex-col items-start w-full">
-              <span className="font-sans text-[9px] tracking-[0.2em] uppercase text-white/40 mb-3">
-                3. Yükseklik Seviyesi
-              </span>
-              <div className="grid grid-cols-3 gap-2 w-full">
-                {(["low", "mid", "tall"] as RadHeight[]).map((h) => (
-                  <button
-                    key={h}
-                    onClick={() => setHeight(h)}
-                    className={`py-2 px-3 text-[10px] uppercase tracking-[0.15em] font-sans border transition-all rounded-none cursor-pointer font-medium ${
-                      height === h
-                        ? "border-[#C45C26] text-[#C45C26] bg-[#C45C26]/5"
-                        : "border-white/5 text-white/50 hover:border-white/20 hover:text-white"
-                    }`}
-                  >
-                    {h === "low" ? "1.5m (Alçak)" : h === "mid" ? "2.2m (Orta)" : "3.3m (Yüksek)"}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 4. Heat slider (Global Heat index) */}
-            <div className="flex flex-col items-start w-full pt-4 border-t border-white/5">
-              <div className="flex items-center justify-between w-full mb-3">
-                <span className="font-sans text-[9px] tracking-[0.2em] uppercase text-white/40 flex items-center gap-1.5">
-                  <Flame size={11} className="text-[#C45C26]" /> 4. Isı Derecesi
-                </span>
-                <span className="font-serif text-lg font-bold text-[#C45C26]">
-                  {heatLevel}°C
+            {/* 1. Type */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="font-sans text-[9px] tracking-[0.28em] uppercase text-white/35">
+                  01 — Radyatör Tipi
                 </span>
               </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={heatLevel}
-                onChange={(e) => updateGlobalHeat(parseInt(e.target.value))}
-                className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#C45C26] focus:outline-none"
-                style={{
-                  backgroundImage: `linear-gradient(to right, #C45C26 0%, #C45C26 ${heatLevel}%, rgba(255,255,255,0.1) ${heatLevel}%, rgba(255,255,255,0.1) 100%)`,
-                }}
-              />
-              <span className="font-sans text-[9px] text-white/30 italic mt-2">
-                Isı arttıkça sistem bloom parlaması, yükselen partiküller ve oda aurası kızıllığı artar.
+              <div className="grid grid-cols-3 gap-2">
+                {(Object.entries(TYPE_LABELS) as [RadType, { name: string; desc: string }][]).map(([t, lbl]) => (
+                  <SelectorBtn key={t} active={type === t} onClick={() => setType(t)}>
+                    <span className="block">{lbl.name}</span>
+                    <span className="block text-[8px] tracking-[0.1em] opacity-50 normal-case mt-0.5">{lbl.desc}</span>
+                  </SelectorBtn>
+                ))}
+              </div>
+            </div>
+
+            {/* 2. Surface */}
+            <div>
+              <span className="font-sans text-[9px] tracking-[0.28em] uppercase text-white/35 block mb-3">
+                02 — Yüzey Dokusu
               </span>
+              <div className="grid grid-cols-2 gap-2">
+                {(Object.entries(SURFACE_LABELS) as [RadSurface, { name: string; hex: string }][]).map(([s, lbl]) => (
+                  <SelectorBtn key={s} active={surface === s} onClick={() => setSurface(s)} accent={lbl.hex}>
+                    {lbl.name}
+                  </SelectorBtn>
+                ))}
+              </div>
+            </div>
+
+            {/* 3. Height */}
+            <div>
+              <span className="font-sans text-[9px] tracking-[0.28em] uppercase text-white/35 block mb-3">
+                03 — Yükseklik
+              </span>
+              <div className="grid grid-cols-3 gap-2">
+                {(Object.entries(HEIGHT_LABELS) as [RadHeight, { name: string; sub: string }][]).map(([h, lbl]) => (
+                  <SelectorBtn key={h} active={height === h} onClick={() => setHeight(h)}>
+                    <span className="block">{lbl.name}</span>
+                    <span className="block text-[8px] opacity-50 normal-case mt-0.5">{lbl.sub}</span>
+                  </SelectorBtn>
+                ))}
+              </div>
+            </div>
+
+            {/* 4. Heat Slider */}
+            <div className="pt-5 border-t border-white/[0.06]">
+              <div className="flex items-center justify-between mb-4">
+                <span className="font-sans text-[9px] tracking-[0.28em] uppercase text-white/35 flex items-center gap-1.5">
+                  <Flame size={10} className="text-[#C45C26]" />
+                  04 — Isı Derecesi
+                </span>
+                <motion.span
+                  key={heatLevel}
+                  initial={{ scale: 1.2, color: "#FF7034" }}
+                  animate={{ scale: 1, color: "#C45C26" }}
+                  transition={{ duration: 0.4 }}
+                  className="font-serif text-2xl font-bold tabular-nums"
+                >
+                  {heatLevel}°
+                </motion.span>
+              </div>
+
+              {/* Custom heat slider */}
+              <div className="relative w-full h-6 flex items-center">
+                <div
+                  className="absolute inset-y-0 left-0 rounded pointer-events-none transition-all duration-200"
+                  style={{
+                    width: `${heatLevel}%`,
+                    background: `linear-gradient(to right, #3D2B1F, #C45C26 60%, #FF6B35)`,
+                    boxShadow: heatLevel > 20 ? `0 0 ${8 + heatLevel * 0.12}px rgba(196,92,38,${0.2 + heatLevel * 0.004})` : "none",
+                  }}
+                />
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={heatLevel}
+                  onChange={(e) => updateGlobalHeat(parseInt(e.target.value))}
+                  className="relative w-full h-1 bg-white/[0.07] rounded appearance-none cursor-pointer focus:outline-none z-10"
+                  style={{
+                    accentColor: "#C45C26",
+                  }}
+                />
+              </div>
+
+              {/* Heat description */}
+              <p className="font-sans text-[9px] text-white/25 italic mt-2.5 leading-relaxed">
+                Isı arttıkça bloom parlaması, yükselen partiküller ve sahne aurası kızıllaşır. Siteyi ısıt.
+              </p>
             </div>
 
           </div>
 
-          {/* Action Trigger Button */}
-          <button
+          {/* CTA Button */}
+          <motion.button
             onClick={() => setShowNamingModal(true)}
-            className="w-full mt-10 py-3.5 bg-[#C45C26] hover:bg-[#d56b33] active:scale-98 transition-all font-sans text-xs tracking-[0.2em] uppercase text-[#E8D9C8] font-bold rounded-none cursor-pointer flex items-center justify-center gap-2"
+            whileHover={{ scale: 1.01, y: -1 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 380, damping: 20 }}
+            className="relative w-full mt-10 py-4 overflow-hidden group rounded-none cursor-pointer border border-[#C45C26]/40 hover:border-[#C45C26] transition-colors duration-300"
+            style={{ backgroundColor: "rgba(196, 92, 38, 0.08)" }}
           >
-            <Sparkles size={14} />
-            Bu Tasarımı Mirasa Ekle
-          </button>
-        </div>
+            {/* Sliding fill background */}
+            <span className="absolute inset-0 bg-[#C45C26] origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]" />
+            <span className="relative flex items-center justify-center gap-2.5 font-sans text-xs tracking-[0.22em] uppercase text-[#C45C26] group-hover:text-[#F3ECE6] font-semibold transition-colors duration-300">
+              <Sparkles size={13} />
+              Bu Tasarımı Mirasa Ekle
+            </span>
+          </motion.button>
+        </motion.div>
 
-        {/* Right Column: 3D Studio Canvas viewport (7 Columns) */}
-        <div className="lg:col-span-7 h-[450px] lg:h-auto min-h-[500px] border border-white/5 bg-[#0C0A09] relative rounded-none flex items-stretch">
-          
-          {/* Custom corner boundaries overlay */}
-          <div className="absolute top-0 left-0 w-3 h-3 border-t border-l border-white/20 z-10 pointer-events-none" />
-          <div className="absolute top-0 right-0 w-3 h-3 border-t border-r border-white/20 z-10 pointer-events-none" />
-          <div className="absolute bottom-0 left-0 w-3 h-3 border-b border-l border-white/20 z-10 pointer-events-none" />
-          <div className="absolute bottom-0 right-0 w-3 h-3 border-b border-r border-white/20 z-10 pointer-events-none" />
+        {/* ── Right 3D Canvas ── */}
+        <motion.div
+          initial={{ opacity: 0, x: 16 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.9, ease: [0.25, 1, 0.5, 1], delay: 0.25 }}
+          className="lg:col-span-7 h-[450px] lg:h-auto min-h-[500px] border border-white/[0.06] bg-[#0C0A09] relative rounded-none flex items-stretch"
+          style={{
+            boxShadow: `inset 0 0 80px rgba(0,0,0,0.5), 0 0 ${20 + heatLevel * 0.4}px rgba(196,92,38,${0.02 + heatLevel * 0.001})`,
+          }}
+        >
+          {/* Corner boundaries */}
+          {[["top-0 left-0 border-t border-l"], ["top-0 right-0 border-t border-r"], ["bottom-0 left-0 border-b border-l"], ["bottom-0 right-0 border-b border-r"]].map((cls, i) => (
+            <div key={i} className={`absolute w-3 h-3 border-white/18 z-10 pointer-events-none ${cls[0]}`} />
+          ))}
 
-          {/* Interactive R3F canvas wrapper */}
+          {/* 3D Canvas */}
           <div
             className="w-full h-full relative"
             data-cursor="3d"
             style={{
               filter: heatLevel > 15 ? "url(#heat-haze-filter)" : "none",
+              transition: "filter 0.5s ease",
             }}
           >
             <ConfiguratorCanvas type={type} surface={surface} height={height} />
           </div>
 
-          <div className="absolute bottom-4 left-4 text-[9px] font-sans tracking-[0.25em] uppercase text-white/30 pointer-events-none z-10">
-            Döküm Stüdyosu (İncele & Çevir)
+          {/* Studio label */}
+          <div className="absolute bottom-4 left-4 text-[8px] font-sans tracking-[0.28em] uppercase text-white/25 pointer-events-none z-10">
+            Döküm Stüdyosu — İncele & Çevir
           </div>
-        </div>
-
+          {/* Heat indicator */}
+          <div
+            className="absolute bottom-4 right-4 text-[8px] font-sans tracking-[0.2em] uppercase pointer-events-none z-10 transition-all duration-500"
+            style={{ color: `rgba(196, 92, 38, ${0.3 + heatLevel * 0.007})` }}
+          >
+            {heatLevel}° aktif
+          </div>
+        </motion.div>
       </div>
 
-      {/* Naming Modal Overlay */}
+      {/* ── Naming Modal ── */}
       <AnimatePresence>
         {showNamingModal && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/88 backdrop-blur-sm"
           >
             <motion.div
-              initial={{ scale: 0.95, y: 15 }}
+              initial={{ scale: 0.94, y: 20 }}
               animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 15 }}
-              transition={{ duration: 0.4 }}
-              className="max-w-md w-full bg-[#14110F] border border-white/10 p-8 flex flex-col relative"
+              exit={{ scale: 0.94, y: 20 }}
+              transition={{ duration: 0.45, ease: [0.25, 1, 0.5, 1] }}
+              className="max-w-md w-full border border-white/[0.09] p-9 flex flex-col relative"
+              style={{
+                backgroundColor: "#13100E",
+                boxShadow: "0 30px 80px rgba(0,0,0,0.7), inset 0 0 40px rgba(0,0,0,0.2)",
+              }}
             >
-              {/* Corner Trims */}
+              {/* Corner trims */}
               <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-white/20" />
               <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-white/20" />
+              <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-white/20" />
+              <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-white/20" />
 
               <button
                 onClick={() => setShowNamingModal(false)}
-                className="absolute top-4 right-4 text-white/40 hover:text-white cursor-pointer"
+                className="absolute top-5 right-5 text-[9px] tracking-[0.2em] uppercase text-white/30 hover:text-white/70 transition-colors cursor-pointer"
                 disabled={isGenerating}
               >
                 Kapat
               </button>
 
-              <h4 className="font-serif text-2xl font-bold mb-4 text-white">Miras Sertifikası</h4>
-              
-              {!isSuccess ? (
-                <>
-                  <p className="font-sans text-xs text-white/60 leading-relaxed mb-6 font-light">
-                    Radyatörünüzün özgün tasarım tescili için sertifika üzerine yazılacak adınızı veya atölye imzanızı belirtin.
-                  </p>
-                  
-                  <input
-                    type="text"
-                    maxLength={30}
-                    placeholder="Tasarımcı Adı / Atölye"
-                    value={designerName}
-                    onChange={(e) => setDesignerName(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 p-3 text-sm text-white focus:outline-none focus:border-[#C45C26] rounded-none mb-6 font-sans font-light"
-                    disabled={isGenerating}
-                  />
-
-                  <button
-                    onClick={handleGenerateCertificate}
-                    disabled={isGenerating || !designerName.trim()}
-                    className="w-full py-3 bg-[#C45C26] hover:bg-[#d56b33] disabled:opacity-40 transition-colors font-sans text-xs tracking-[0.2em] uppercase text-[#E8D9C8] font-bold rounded-none cursor-pointer flex items-center justify-center gap-2"
+              <AnimatePresence mode="wait">
+                {!isSuccess ? (
+                  <motion.div
+                    key="form"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
                   >
-                    {isGenerating ? (
-                      <>
-                        <RefreshCw size={12} className="animate-spin" />
-                        Sertifika Basılıyor...
-                      </>
-                    ) : (
-                      <>
-                        <Download size={12} />
-                        Sertifikayı İndir ve Mirası Kaydet
-                      </>
-                    )}
-                  </button>
-                </>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <div className="w-12 h-12 rounded-full border border-green-500/20 bg-green-500/10 flex items-center justify-center text-green-400 mb-4 animate-bounce">
-                    <Check size={20} />
-                  </div>
-                  <h5 className="font-serif text-lg font-bold text-white mb-2">Tescil Başarılı</h5>
-                  <p className="font-sans text-xs text-white/50 font-light">
-                    Sertifikanız indirildi ve tasarımınız &ldquo;Embers&rdquo; duvarına eklendi.
-                  </p>
-                </div>
-              )}
+                    <span className="font-sans text-[9px] tracking-[0.3em] uppercase text-[#C45C26] block mb-4">
+                      Tescil & Miras
+                    </span>
+                    <h4 className="font-serif text-2xl font-bold mb-3 text-white">
+                      Miras Sertifikası
+                    </h4>
+                    <p className="font-sans text-xs text-white/50 leading-relaxed mb-7 font-light">
+                      Radyatörünüzün özgün tasarım sertifikası için atölye imzanızı belirtin.
+                      Bu tasarım Bob&apos;un dijital mirasına eklenecek.
+                    </p>
+
+                    <input
+                      type="text"
+                      maxLength={30}
+                      placeholder="Tasarımcı Adı veya Atölye İmzası"
+                      value={designerName}
+                      onChange={(e) => setDesignerName(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleGenerateCertificate()}
+                      className="w-full bg-white/[0.04] border border-white/[0.09] focus:border-[#C45C26]/60 p-3.5 text-sm text-white focus:outline-none rounded-none mb-6 font-sans font-light tracking-wide transition-colors duration-200"
+                      disabled={isGenerating}
+                      autoFocus
+                    />
+
+                    <motion.button
+                      onClick={handleGenerateCertificate}
+                      disabled={isGenerating || !designerName.trim()}
+                      whileHover={!isGenerating && designerName.trim() ? { scale: 1.01, y: -1 } : {}}
+                      whileTap={!isGenerating && designerName.trim() ? { scale: 0.99 } : {}}
+                      className="w-full py-3.5 bg-[#C45C26] hover:bg-[#d56b33] disabled:opacity-35 font-sans text-xs tracking-[0.22em] uppercase text-[#F3ECE6] font-bold rounded-none cursor-pointer flex items-center justify-center gap-2 transition-colors duration-200"
+                    >
+                      {isGenerating ? (
+                        <>
+                          <RefreshCw size={12} className="animate-spin" />
+                          Sertifika Basılıyor...
+                        </>
+                      ) : (
+                        <>
+                          <Download size={12} />
+                          Sertifikayı Bas ve Mirası Kaydet
+                        </>
+                      )}
+                    </motion.button>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="success"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="flex flex-col items-center justify-center py-10 text-center"
+                  >
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 18, delay: 0.1 }}
+                      className="w-14 h-14 rounded-full border border-[#C45C26]/30 bg-[#C45C26]/10 flex items-center justify-center text-[#C45C26] mb-5"
+                    >
+                      <Check size={22} />
+                    </motion.div>
+                    <h5 className="font-serif text-xl font-bold text-white mb-2">Tescil Başarılı</h5>
+                    <p className="font-sans text-xs text-white/45 font-light">
+                      Sertifikanız indirildi ve tasarımınız &ldquo;Embers&rdquo; duvarına eklendi.
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           </motion.div>
         )}

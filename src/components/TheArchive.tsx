@@ -1,11 +1,17 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useMemo } from "react";
 import { useHeatStore } from "@/store/useHeatStore";
 import { Flame, ArrowRight, Move } from "lucide-react";
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "framer-motion";
 import ArchiveModal from "./ArchiveModal";
+
+// Deterministic PRNG to avoid hydration issues
+const seededRand = (seed: number) => {
+  const x = Math.sin(seed + 1) * 10000;
+  return x - Math.floor(x);
+};
 
 const ArchiveMiniCanvas = dynamic(() => import("./ArchiveMiniCanvas"), {
   ssr: false,
@@ -80,6 +86,40 @@ const CARDS_DATA: ArchiveCardData[] = [
   },
 ];
 
+// Heat-reactive ascending particles rendered behind the section
+function HeatParticles({ count }: { count: number }) {
+  const particles = useMemo(() =>
+    Array.from({ length: count }).map((_, i) => ({
+      id: i,
+      left: `${seededRand(i * 7) * 96 + 2}%`,
+      size: 2 + seededRand(i * 13) * 3,
+      duration: 4 + seededRand(i * 19) * 6,
+      delay: seededRand(i * 31) * 5,
+      opacity: 0.12 + seededRand(i * 41) * 0.22,
+    })),
+    [count]
+  );
+
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          className="absolute bottom-0 rounded-full"
+          style={{
+            left: p.left,
+            width: p.size,
+            height: p.size,
+            backgroundColor: `rgba(196, 92, 38, ${p.opacity})`,
+            animation: `particleAscend ${p.duration}s ${p.delay}s infinite linear`,
+            boxShadow: `0 0 ${p.size * 2}px rgba(196, 92, 38, ${p.opacity * 0.5})`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 interface CardProps {
   card: ArchiveCardData;
   onOpen: () => void;
@@ -88,25 +128,32 @@ interface CardProps {
 function ArchiveCard({ card, onOpen }: CardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const glowRef = useRef<HTMLDivElement>(null);
 
-  // Parallax tilt effect on card hover
+  // Multi-layer parallax tilt on hover
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!cardRef.current) return;
     const rect = cardRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left - rect.width / 2;
     const y = e.clientY - rect.top - rect.height / 2;
     
-    // Slight tilt angles
-    const tiltX = (y / (rect.height / 2)) * -6;
-    const tiltY = (x / (rect.width / 2)) * 6;
+    const tiltX = (y / (rect.height / 2)) * -5;
+    const tiltY = (x / (rect.width / 2)) * 5;
+    cardRef.current.style.transform = `perspective(900px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale3d(1.022, 1.022, 1.022)`;
 
-    cardRef.current.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(1.025)`;
+    // Move spotlight glow with mouse
+    if (glowRef.current) {
+      const pct_x = ((e.clientX - rect.left) / rect.width) * 100;
+      const pct_y = ((e.clientY - rect.top) / rect.height) * 100;
+      glowRef.current.style.background = `radial-gradient(circle at ${pct_x}% ${pct_y}%, rgba(196,92,38,0.09) 0%, transparent 60%)`;
+    }
   };
 
   const handleMouseLeave = () => {
     setIsHovered(false);
     if (!cardRef.current) return;
-    cardRef.current.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1.0)`;
+    cardRef.current.style.transform = `perspective(900px) rotateX(0deg) rotateY(0deg) scale3d(1,1,1)`;
+    if (glowRef.current) glowRef.current.style.background = "none";
   };
 
   return (
@@ -115,17 +162,26 @@ function ArchiveCard({ card, onOpen }: CardProps) {
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={handleMouseLeave}
-      className="w-[310px] md:w-[350px] h-[480px] md:h-[530px] flex-shrink-0 border border-white/5 bg-[#14110F] flex flex-col justify-between p-6 relative select-none cursor-grab active:cursor-grabbing transition-shadow duration-500 rounded-none overflow-hidden"
+      className="w-[310px] md:w-[350px] h-[480px] md:h-[530px] flex-shrink-0 border bg-[#14110F] flex flex-col justify-between p-6 relative select-none cursor-grab active:cursor-grabbing rounded-none overflow-hidden"
       style={{
+        transition: "transform 0.45s cubic-bezier(0.25,1,0.5,1), box-shadow 0.45s cubic-bezier(0.25,1,0.5,1), border-color 0.35s ease",
         boxShadow: isHovered
-          ? "0 20px 40px -15px rgba(0,0,0,0.4), 0 0 20px rgba(196,92,38,0.06)"
-          : "0 10px 30px -15px rgba(0,0,0,0.3)",
-        borderColor: isHovered ? "rgba(196, 92, 38, 0.25)" : "rgba(255,255,255,0.05)",
+          ? "0 28px 60px -15px rgba(0,0,0,0.65), 0 0 28px rgba(196,92,38,0.10), inset 0 0 20px rgba(0,0,0,0.12)"
+          : "0 10px 30px -15px rgba(0,0,0,0.35)",
+        borderColor: isHovered ? "rgba(196,92,38,0.32)" : "rgba(255,255,255,0.05)",
       }}
     >
+      {/* Mouse-following spotlight */}
+      <div ref={glowRef} className="absolute inset-0 pointer-events-none z-0 transition-none" />
       {/* Corner indicators */}
-      <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-white/10" />
-      <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-white/10" />
+      <div
+        className="absolute top-0 left-0 w-2.5 h-2.5 border-t border-l z-10 pointer-events-none transition-colors duration-300"
+        style={{ borderColor: isHovered ? "rgba(196,92,38,0.5)" : "rgba(255,255,255,0.12)" }}
+      />
+      <div
+        className="absolute top-0 right-0 w-2.5 h-2.5 border-t border-r z-10 pointer-events-none transition-colors duration-300"
+        style={{ borderColor: isHovered ? "rgba(196,92,38,0.5)" : "rgba(255,255,255,0.12)" }}
+      />
 
       {/* Card Header */}
       <div className="flex flex-col items-start w-full">
@@ -198,6 +254,10 @@ export default function TheArchive() {
   const startX = useRef(0);
   const scrollLeftVal = useRef(0);
   const increaseHeat = useHeatStore((state) => state.increaseHeat);
+  const heatLevel = useHeatStore((state) => state.heatLevel);
+
+  // Scale particle count with heat: 0 at cold, 30 at full heat
+  const particleCount = Math.round((heatLevel / 100) * 30);
 
   // Translate vertical wheel scroll to horizontal track scroll
   // Once the track is fully scrolled, vertical scroll passes through
@@ -248,8 +308,16 @@ export default function TheArchive() {
       id="archive"
       className="w-full min-h-screen bg-[#0C0A09] py-24 md:py-32 flex flex-col justify-center relative overflow-hidden select-none border-t border-white/5"
     >
-      {/* Background ambient light */}
-      <div className="absolute inset-0 bg-[#C45C26]/[0.005] blur-3xl pointer-events-none" />
+      {/* Heat-reactive rising particles */}
+      {particleCount > 0 && <HeatParticles count={particleCount} />}
+
+      {/* Background ambient glow (grows with heat) */}
+      <div
+        className="absolute inset-0 pointer-events-none transition-opacity duration-1000"
+        style={{
+          background: `radial-gradient(ellipse 70% 50% at 50% 90%, rgba(196, 92, 38, ${0.02 + (heatLevel / 100) * 0.06}) 0%, transparent 70%)`,
+        }}
+      />
 
       {/* Header Info */}
       <div className="w-full max-w-7xl mx-auto px-6 md:px-12 flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 relative z-10">
@@ -285,12 +353,19 @@ export default function TheArchive() {
           scrollBehavior: isDragging ? "auto" : "smooth",
         }}
       >
-        {CARDS_DATA.map((card) => (
-          <ArchiveCard
+        {CARDS_DATA.map((card, i) => (
+          <motion.div
             key={card.type}
-            card={card}
-            onOpen={() => setSelectedCard(card)}
-          />
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "0px -100px" }}
+            transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1], delay: i * 0.08 }}
+          >
+            <ArchiveCard
+              card={card}
+              onOpen={() => setSelectedCard(card)}
+            />
+          </motion.div>
         ))}
       </div>
 
