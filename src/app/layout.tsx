@@ -5,13 +5,12 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "82° — The Heat That Remembers",
   description:
-    "Premium artisanal radiators handcrafted in Karaköy, Istanbul. A modern high-end editorial showcase of heating design.",
+    "Premium handcrafted artisanal radiators. A modern, minimalist editorial layout inspired by classic metal casting heritage.",
   keywords: [
-    "editorial radiator",
     "minimalist radiator",
+    "editorial heating",
     "82 degrees",
-    "modern home design",
-    "luxury radiator",
+    "awwwards layout design",
   ],
 };
 
@@ -23,9 +22,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${outfit.variable} ${playfair.variable} antialiased`}
+      className={`${outfit.variable} ${playfair.variable} antialiased scroll-smooth`}
     >
-      <body className="min-h-screen flex flex-col bg-black-pure text-warm-white">
+      <body className="min-h-screen flex flex-col bg-black-pure text-white-pure selection:bg-electric-orange selection:text-black-pure">
         {children}
       </body>
     </html>
