@@ -31,8 +31,14 @@ export default function Heritage() {
     <section
       ref={ref}
       id="heritage"
-      className="relative bg-charcoal py-[clamp(80px,12vw,200px)] px-[clamp(24px,5vw,80px)] overflow-hidden"
+      className="relative bg-charcoal py-[8vw] px-[5vw] overflow-visible"
     >
+      {/* ── Organic Wave Cut from TheLivingKiln ── */}
+      <div className="absolute top-0 left-0 w-full h-[6vw] -translate-y-[99%] overflow-hidden pointer-events-none z-10">
+        <svg className="w-full h-full block" viewBox="0 0 1440 100" fill="none" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M0,100 C360,40 720,70 1080,40 1440,100 Z" fill="var(--color-charcoal)" />
+        </svg>
+      </div>
       {/* Subtle warm glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-terracotta/5 blur-[120px] pointer-events-none" />
 
