@@ -160,21 +160,63 @@ export default function Navigation() {
             </a>
           ))}
 
-          {/* ─── CTA Button ─── */}
-          <a
+          {/* ─── Organic CTA Button ─── */}
+          <motion.a
             href="#kiln"
+            whileHover="hover"
+            whileTap="tap"
             className="
-              bg-terracotta text-cream
-              px-6 py-2.5 rounded-full
-              text-sm font-medium
-              hover:bg-terracotta-light hover:scale-105
-              transition-all duration-300
-              shadow-lg hover:shadow-xl
-              select-none
+              relative py-2.5 px-6
+              font-sans font-semibold tracking-wider text-xs uppercase
+              select-none outline-none border-none bg-transparent cursor-pointer
             "
           >
-            Configure Yours
-          </a>
+            <motion.div
+              className="absolute inset-0 z-0 pointer-events-none"
+              variants={{
+                hover: {
+                  scale: 1.06,
+                  rotate: -1,
+                  transition: { type: "spring", stiffness: 250, damping: 15 },
+                },
+                tap: {
+                  scale: 0.96,
+                },
+              }}
+            >
+              <svg
+                viewBox="0 0 160 48"
+                className="w-full h-full drop-shadow-md group-hover:drop-shadow-lg transition-all duration-300"
+                preserveAspectRatio="none"
+              >
+                <path
+                  d="M 8,3 
+                     C 48,1 112,4 152,3 
+                     C 158,3 160,12 159,24 
+                     C 158,36 156,45 149,45 
+                     C 112,44 48,47 10,45 
+                     C 4,45 2,36 1,24 
+                     C 0,12 2,3 8,3 Z"
+                  fill="var(--color-terracotta)"
+                  className="transition-colors duration-300"
+                />
+              </svg>
+            </motion.div>
+
+            <span className="relative z-10 block text-cream">
+              <span className="relative overflow-hidden inline-block group">
+                <span className="block transition-all duration-300 group-hover:-translate-y-full">
+                  Configure Yours
+                </span>
+                <span
+                  className="block absolute inset-0 w-full h-full transition-all duration-300 translate-y-full group-hover:translate-y-0"
+                  aria-hidden="true"
+                >
+                  Configure Yours
+                </span>
+              </span>
+            </span>
+          </motion.a>
         </div>
 
         {/* ─── Mobile Hamburger ─── */}

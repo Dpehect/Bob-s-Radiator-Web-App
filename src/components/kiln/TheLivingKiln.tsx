@@ -3,23 +3,25 @@
 import React, { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { fadeUp } from "@/lib/motion";
+import { useHeatStore } from "@/store/useHeatStore";
 import AnimatedText from "@/components/ui/AnimatedText";
 import KilnCanvas from "./KilnCanvas";
 import KilnControls from "./KilnControls";
 
 /**
  * Main Living Kiln Configurator container.
- * Smoothly blends 3D interaction window with tactile layout controls.
+ * Smoothly blends 3D interaction window with tactile layout controls and live telemetry.
  */
 export default function TheLivingKiln() {
   const containerRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(containerRef, { once: true, margin: "-10%" });
+  const { radiatorType, radiatorSurface, radiatorHeight, heatLevel } = useHeatStore();
 
   return (
     <section
       ref={containerRef}
       id="kiln"
-      className="bg-warm-white py-[clamp(80px,10vw,160px)] px-[clamp(24px,5vw,80px)]"
+      className="bg-warm-white py-[8vw] px-[5vw]"
     >
       <div className="max-w-6xl mx-auto space-y-16">
         {/* Header */}
@@ -28,20 +30,20 @@ export default function TheLivingKiln() {
             variants={fadeUp}
             initial="hidden"
             animate={isInView ? "visible" : "hidden"}
-            className="text-xs tracking-[0.3em] uppercase text-terracotta font-sans font-medium"
+            className="text-xs tracking-[0.35em] uppercase text-terracotta font-sans font-bold"
           >
             THE LIVING KILN
           </motion.p>
           <AnimatedText
             text="Shape Your Warmth"
-            className="text-[clamp(36px,5.5vw,80px)] text-charcoal"
+            className="text-[clamp(44px,7vw,110px)] text-charcoal font-black leading-none"
           />
           <motion.p
             variants={fadeUp}
             initial="hidden"
             animate={isInView ? "visible" : "hidden"}
-            transition={{ delay: 0.3 }}
-            className="text-smoke text-[clamp(14px,1vw,17px)] leading-relaxed"
+            transition={{ delay: 0.35 }}
+            className="text-smoke text-[clamp(15px,1.1vw,18px)] leading-relaxed mt-4"
           >
             Design a custom monument of heat. Choose your geometry, define the
             surface coating, and set the temperature limit.
@@ -56,7 +58,7 @@ export default function TheLivingKiln() {
             initial="hidden"
             animate={isInView ? "visible" : "hidden"}
             transition={{ delay: 0.4 }}
-            className="lg:col-span-5 flex justify-center lg:justify-start"
+            className="lg:col-span-5 flex justify-center lg:justify-start w-full"
           >
             <KilnControls />
           </motion.div>
@@ -67,18 +69,34 @@ export default function TheLivingKiln() {
             initial="hidden"
             animate={isInView ? "visible" : "hidden"}
             transition={{ delay: 0.5 }}
-            className="lg:col-span-7 relative w-full aspect-[4/3] rounded-3xl overflow-hidden bg-charcoal shadow-2xl border border-charcoal/5"
+            className="lg:col-span-7 relative w-full aspect-[4/3] rounded-[36px] overflow-hidden bg-charcoal shadow-2xl border border-charcoal/5"
           >
             {/* Visual borders to look like a premium testing gauge */}
-            <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-cream/20 z-10" />
-            <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-cream/20 z-10" />
-            <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-cream/20 z-10" />
-            <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-cream/20 z-10" />
+            <div className="absolute top-5 left-5 w-6 h-6 border-t-2 border-l-2 border-cream/20 z-10" />
+            <div className="absolute top-5 right-5 w-6 h-6 border-t-2 border-r-2 border-cream/20 z-10" />
+            <div className="absolute bottom-5 left-5 w-6 h-6 border-b-2 border-l-2 border-cream/20 z-10" />
+            <div className="absolute bottom-5 right-5 w-6 h-6 border-b-2 border-r-2 border-cream/20 z-10" />
 
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
-              <span className="text-[9px] tracking-[0.25em] uppercase text-cream/30 font-semibold">
+            <div className="absolute top-5 left-1/2 -translate-x-1/2 z-10">
+              <span className="text-[9px] tracking-[0.3em] uppercase text-cream/35 font-bold">
                 Telemetry Grid / 3D Live Feed
               </span>
+            </div>
+
+            {/* Live Dashboard Telemetry Readout */}
+            <div className="absolute bottom-6 left-8 z-10 font-mono text-[9px] text-cream/40 uppercase tracking-widest leading-relaxed pointer-events-none select-none">
+              <span className="text-brass">System Status: Active</span><br/>
+              <span>Heat Level: {heatLevel}°C</span><br/>
+              <span>Alloy: {radiatorSurface}</span><br/>
+              <span>Structure: {radiatorType}</span><br/>
+              <span>Height: {radiatorHeight}</span>
+            </div>
+
+            {/* Live Dashboard Grid Specifications Overlay */}
+            <div className="absolute bottom-6 right-8 z-10 font-mono text-[9px] text-cream/30 uppercase tracking-widest leading-relaxed pointer-events-none select-none text-right">
+              <span>Freq: 60Hz</span><br/>
+              <span>EMISSION: {(heatLevel / 100 * 1.5).toFixed(2)} KW</span><br/>
+              <span>PBR Texture: 128px</span>
             </div>
 
             <KilnCanvas />

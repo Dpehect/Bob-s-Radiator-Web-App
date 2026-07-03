@@ -6,7 +6,6 @@ import { Center } from "@react-three/drei";
 import * as THREE from "three";
 import { useHeatStore } from "@/store/useHeatStore";
 
-
 // Simple deterministic PRNG for pure render offsets
 const createPRNG = (seed: number) => {
   let s = seed;
@@ -15,6 +14,126 @@ const createPRNG = (seed: number) => {
     return x - Math.floor(x);
   };
 };
+
+// Custom Shader for rising thermal heat haze particles
+const KilnParticlesShader = {
+  uniforms: {
+    uTime: { value: 0 },
+    uHeatRatio: { value: 0 },
+  },
+  vertexShader: `
+    uniform float uTime;
+    uniform float uHeatRatio;
+    attribute vec3 aRandom;
+    varying float vAlpha;
+    varying vec3 vPosition;
+
+    void main() {
+      vec3 pos = position;
+      
+      // Speed scales up under heavy temperature load
+      float speed = 0.3 + uHeatRatio * 0.9;
+      float drift = 0.1 + uHeatRatio * 0.35;
+      
+      // Infinite loop upward
+      float progress = mod(uTime * speed + aRandom.x * 12.0, 4.4);
+      pos.y = -2.2 + progress;
+      
+      // Organic waving drift
+      pos.x += sin(uTime * 1.5 + aRandom.y * 80.0) * drift;
+      pos.z += cos(uTime * 1.2 + aRandom.z * 80.0) * drift;
+      
+      vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+      gl_Position = projectionMatrix * mvPosition;
+      
+      // Particle size scales with temperature
+      gl_PointSize = (12.0 * aRandom.z * (0.4 + uHeatRatio * 0.6)) / -mvPosition.z;
+      
+      // Fade in at bottom, fade out at top
+      float fadeIn = smoothstep(-2.2, -1.5, pos.y);
+      float fadeOut = smoothstep(2.2, 0.6, pos.y);
+      
+      // Overall density/opacity scales directly with heatRatio
+      vAlpha = fadeIn * fadeOut * (0.05 + uHeatRatio * 0.85);
+      vPosition = pos;
+    }
+  `,
+  fragmentShader: `
+    varying float vAlpha;
+    varying vec3 vPosition;
+
+    void main() {
+      float dist = distance(gl_PointCoord, vec2(0.5));
+      if (dist > 0.5) discard;
+      
+      float intensity = smoothstep(0.5, 0.12, dist);
+      
+      vec3 coolColor = vec3(0.96, 0.93, 0.88); // cream glow
+      vec3 hotColor = vec3(1.0, 0.37, 0.1);    // hot terracotta/ember glow
+      
+      float colorMix = clamp((vPosition.y + 1.2) / 2.4, 0.0, 1.0);
+      vec3 color = mix(coolColor, hotColor, colorMix);
+      
+      gl_FragColor = vec4(color, intensity * vAlpha * 0.85);
+    }
+  `,
+};
+
+function KilnParticles({ count = 60 }) {
+  const meshRef = useRef<THREE.Points>(null);
+  const heatLevel = useHeatStore((state) => state.heatLevel);
+  const heatRatio = heatLevel / 100;
+
+  const [positions, randoms] = useMemo(() => {
+    const pos = new Float32Array(count * 3);
+    const rand = new Float32Array(count * 3);
+    const random = createPRNG(777);
+    
+    for (let i = 0; i < count; i++) {
+      pos[i * 3] = (random() - 0.5) * 3.8;
+      pos[i * 3 + 1] = (random() - 0.5) * 4.4;
+      pos[i * 3 + 2] = (random() - 0.5) * 0.8;
+
+      rand[i * 3] = random();
+      rand[i * 3 + 1] = random();
+      rand[i * 3 + 2] = random();
+    }
+    return [pos, rand];
+  }, [count]);
+
+  const uniforms = useMemo(() => {
+    return {
+      uTime: { value: 0 },
+      uHeatRatio: { value: 0 },
+    };
+  }, []);
+
+  useFrame((state) => {
+    if (!meshRef.current) return;
+    const material = meshRef.current.material as THREE.ShaderMaterial;
+    if (material.uniforms) {
+      material.uniforms.uTime.value = state.clock.getElapsedTime();
+      material.uniforms.uHeatRatio.value = heatRatio;
+    }
+  });
+
+  return (
+    <points ref={meshRef}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+        <bufferAttribute attach="attributes-aRandom" args={[randoms, 3]} />
+      </bufferGeometry>
+      <shaderMaterial
+        transparent
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+        vertexShader={KilnParticlesShader.vertexShader}
+        fragmentShader={KilnParticlesShader.fragmentShader}
+        uniforms={uniforms}
+      />
+    </points>
+  );
+}
 
 // Procedural noise bump texture generator for metal/clay surfaces
 const createProceduralTexture = (surface: string) => {
@@ -197,8 +316,9 @@ function RadiatorModel({ geoms }: RadiatorModelProps) {
     return 0.006;
   }, [radiatorSurface]);
 
+  // Emissive light scales up significantly to create fiery volcanic cores under high temperature
   const emissiveColor = new THREE.Color("#FF5E1A");
-  const emissiveIntensity = heatRatio * 1.5;
+  const emissiveIntensity = heatRatio * 2.8;
 
   // Random micro-variations for craft look
   const pipeOffsets = useMemo(() => {
@@ -214,8 +334,9 @@ function RadiatorModel({ geoms }: RadiatorModelProps) {
     return list;
   }, [count, radiatorType, radiatorSurface]);
 
-  const currentColor = new THREE.Color(color).lerp(new THREE.Color("#D45C26"), heatRatio * 0.2);
-  const currentRoughness = Math.max(0.12, roughness - heatRatio * 0.08);
+  // Radiator core material colors blend into bright hot terracotta on high heat
+  const currentColor = new THREE.Color(color).lerp(new THREE.Color("#D45C26"), heatRatio * 0.45);
+  const currentRoughness = Math.max(0.12, roughness - heatRatio * 0.12);
 
   return (
     <group ref={groupRef}>
@@ -379,7 +500,7 @@ function KilnEnvironment() {
   const heatRatio = heatLevel / 100;
 
   const wallColor = useMemo(() => {
-    return new THREE.Color("#141210").lerp(new THREE.Color("#361E14"), heatRatio * 0.3);
+    return new THREE.Color("#141210").lerp(new THREE.Color("#361E14"), heatRatio * 0.45);
   }, [heatRatio]);
 
   return (
@@ -425,7 +546,7 @@ export default function KilnCanvas() {
   }, [sharedGeoms]);
 
   const lightColor = useMemo(() => {
-    return new THREE.Color("#E8D3B8").lerp(new THREE.Color("#FF5E1A"), heatRatio * 0.5);
+    return new THREE.Color("#E8D3B8").lerp(new THREE.Color("#FF5E1A"), heatRatio * 0.7);
   }, [heatRatio]);
 
   return (
@@ -434,20 +555,23 @@ export default function KilnCanvas() {
         camera={{ position: [0, 0.1, 4.4], fov: 45 }}
         gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping }}
       >
-        <ambientLight intensity={0.2 + heatRatio * 0.2} />
+        <ambientLight intensity={0.18 + heatRatio * 0.15} />
         
         {/* Fill keys */}
-        <directionalLight position={[-4, 4, 3]} intensity={0.5} color="#8A9998" />
+        <directionalLight position={[-4, 4, 3]} intensity={0.4} color="#8A9998" />
         <directionalLight position={[4, 5, 4]} intensity={1.4} color={lightColor} />
 
         {/* Backdrop light */}
-        <pointLight position={[0, 0, -1]} intensity={1.0 + heatRatio * 1.5} color="#FF6B35" distance={6} />
+        <pointLight position={[0, 0, -1]} intensity={1.0 + heatRatio * 2.2} color="#FF6B35" distance={6} />
 
         <KilnEnvironment />
 
         <Center>
           <RadiatorModel geoms={sharedGeoms} />
         </Center>
+
+        {/* GPU Point Particles generating visual heat haze rising vertically */}
+        <KilnParticles count={isMobile ? 25 : 65} />
       </Canvas>
     </div>
   );
