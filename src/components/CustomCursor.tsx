@@ -1,164 +1,116 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+// motion allows us to create hardware-accelerated animations using Framer Motion
+// useMotionValue stores coordinates, useSpring adds physical spring weight/damping
+import { motion, useMotionValue, useSpring } from "framer-motion";
 
+/**
+ * CustomCursor replaces the standard system cursor with a physical spring ring.
+ * It lags slightly behind the mouse to feel organic and elastic, scaling up on hover.
+ */
 export default function CustomCursor() {
-  const cursorRef = useRef<HTMLDivElement>(null);
-  const ringRef = useRef<SVGSVGElement>(null);
-  
-  // Mouse position
-  const mouseRef = useRef({ x: 0, y: 0 });
-  // Lerped position
-  const posRef = useRef({ x: 0, y: 0 });
-  
   const [isVisible, setIsVisible] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [snapTarget, setSnapTarget] = useState<DOMRect | null>(null);
+
+  // Raw mouse coordinates (stored as motion values, does not trigger re-renders)
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  // Framer Motion Spring settings:
+  // - stiffness: controls the speed of the snap (high values mean faster snap)
+  // - damping: controls the "wobble" (low values wobble like jelly, high values stop instantly)
+  // - mass: weight of the cursor
+  const springConfig = { stiffness: 250, damping: 28, mass: 0.6 };
+  
+  // Create spring-interpolated coordinates
+  const cursorX = useSpring(mouseX, springConfig);
+  const cursorY = useSpring(mouseY, springConfig);
 
   useEffect(() => {
-    // Hide default cursor (backup check)
+    // Hide native cursor
     document.documentElement.style.cursor = "none";
 
     const handleMouseMove = (e: MouseEvent) => {
-      mouseRef.current = { x: e.clientX, y: e.clientY };
+      mouseX.set(e.clientX);
+      mouseY.set(e.clientY);
       if (!isVisible) setIsVisible(true);
     };
 
-    const handleMouseLeave = () => {
-      setIsVisible(false);
-    };
-
-    const handleMouseEnter = () => {
-      setIsVisible(true);
-    };
+    const handleMouseLeave = () => setIsVisible(false);
+    const handleMouseEnter = () => setIsVisible(true);
 
     window.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseleave", handleMouseLeave);
     document.addEventListener("mouseenter", handleMouseEnter);
 
-    // Scan for interactive hover targets
+    // Listen to mouse hovers on clickable items to expand cursor ring
     const addHoverListeners = () => {
-      const interactiveElements = document.querySelectorAll(
-        'a, button, select, input, textarea, [role="button"], [data-cursor="pointer"], [data-cursor="snap"]'
+      const clickables = document.querySelectorAll(
+        'a, button, [role="button"], input, textarea, select, [data-cursor="pointer"]'
       );
-
-      interactiveElements.forEach((el) => {
-        // Hover effect
-        el.addEventListener("mouseenter", (e) => {
-          setIsHovered(true);
-          const target = e.currentTarget as HTMLElement;
-          if (target.getAttribute("data-cursor") === "snap") {
-            setSnapTarget(target.getBoundingClientRect());
-          }
-        });
-
-        el.addEventListener("mouseleave", () => {
-          setIsHovered(false);
-          setSnapTarget(null);
-        });
+      clickables.forEach((el) => {
+        el.addEventListener("mouseenter", () => setIsHovered(true));
+        el.addEventListener("mouseleave", () => setIsHovered(false));
       });
     };
 
-    // Initial attach
     addHoverListeners();
 
-    // Create an observer to attach listeners to dynamically loaded content
-    const observer = new MutationObserver(() => {
-      addHoverListeners();
-    });
+    // Re-attach listeners when DOM changes dynamically
+    const observer = new MutationObserver(addHoverListeners);
     observer.observe(document.body, { childList: true, subtree: true });
-
-    // Raf loop for interpolation (lerp)
-    let rafId: number;
-    const updateCursor = () => {
-      const cursor = cursorRef.current;
-      if (!cursor) return;
-
-      const targetX = mouseRef.current.x;
-      const targetY = mouseRef.current.y;
-
-      // Lerp positioning
-      // If snapping, interpolate towards the center of the snap target
-      if (snapTarget) {
-        const centerX = snapTarget.left + snapTarget.width / 2;
-        const centerY = snapTarget.top + snapTarget.height / 2;
-        posRef.current.x += (centerX - posRef.current.x) * 0.25;
-        posRef.current.y += (centerY - posRef.current.y) * 0.25;
-      } else {
-        posRef.current.x += (targetX - posRef.current.x) * 0.18;
-        posRef.current.y += (targetY - posRef.current.y) * 0.18;
-      }
-
-      // Apply transform
-      cursor.style.transform = `translate3d(${posRef.current.x}px, ${posRef.current.y}px, 0)`;
-
-      rafId = requestAnimationFrame(updateCursor);
-    };
-
-    rafId = requestAnimationFrame(updateCursor);
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseleave", handleMouseLeave);
       document.removeEventListener("mouseenter", handleMouseEnter);
       observer.disconnect();
-      cancelAnimationFrame(rafId);
     };
-  }, [isVisible, snapTarget]);
+  }, [isVisible, mouseX, mouseY]);
 
+  // Disable custom cursor on touchscreens (mobile/tablet) to prevent issues
   if (typeof window !== "undefined" && !window.matchMedia("(pointer: fine)").matches) {
-    // Do not render custom cursor on touch devices
     return null;
   }
 
   return (
-    <div
-      ref={cursorRef}
-      className={`fixed top-0 left-0 pointer-events-none z-9999 mix-blend-difference -translate-x-1/2 -translate-y-1/2 transition-opacity duration-300 ${
-        isVisible ? "opacity-100" : "opacity-0"
-      }`}
+    <motion.div
+      className="fixed top-0 left-0 pointer-events-none z-9999 mix-blend-difference -translate-x-1/2 -translate-y-1/2"
       style={{
-        transform: "translate3d(0px, 0px, 0)",
-        willChange: "transform",
+        x: cursorX,
+        y: cursorY,
+        opacity: isVisible ? 1 : 0,
       }}
     >
-      <svg
-        ref={ringRef}
-        width={snapTarget ? snapTarget.width + 16 : 40}
-        height={snapTarget ? snapTarget.height + 16 : 40}
-        viewBox={`0 0 ${snapTarget ? snapTarget.width + 16 : 40} ${
-          snapTarget ? snapTarget.height + 16 : 40
-        }`}
-        className="transition-all duration-300 ease-brutalist"
-        style={{
-          transform: isHovered && !snapTarget ? "scale(1.6)" : "scale(1)",
+      {/* 
+        The actual visual ring.
+        We animate its scale and border/background smoothly using Framer Motion's springs.
+      */}
+      <motion.div
+        animate={{
+          width: isHovered ? 48 : 20,
+          height: isHovered ? 48 : 20,
+          borderColor: isHovered ? "#00f5ff" : "#ffffff", // Change from white to cyan on hover
+          backgroundColor: isHovered ? "rgba(0, 245, 255, 0.1)" : "rgba(255, 255, 255, 0)",
         }}
+        transition={{
+          type: "spring",
+          stiffness: 300,
+          damping: 20,
+          mass: 0.5,
+        }}
+        className="border-2 rounded-full flex items-center justify-center"
       >
-        {snapTarget ? (
-          // Brutalist bounding square when snapping
-          <rect
-            x="2"
-            y="2"
-            width={snapTarget.width + 12}
-            height={snapTarget.height + 12}
-            fill="none"
-            stroke="#FF4500"
-            strokeWidth="2"
-            className="transition-all duration-300"
-          />
-        ) : (
-          // SVG ring cursor
-          <circle
-            cx="20"
-            cy="20"
-            r={isHovered ? "12" : "8"}
-            fill="none"
-            stroke={isHovered ? "#FF4500" : "#FFFFFF"}
-            strokeWidth="2"
-            className="transition-all duration-300"
+        {/* Tiny center dot that appears on hover */}
+        {isHovered && (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="w-1.5 h-1.5 bg-coralAccent rounded-full"
           />
         )}
-      </svg>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

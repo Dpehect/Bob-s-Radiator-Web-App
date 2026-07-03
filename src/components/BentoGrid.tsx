@@ -1,164 +1,211 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
-import { Cpu, Wind, Thermometer, ShieldAlert } from "lucide-react";
+// Image helps optimize images on the fly
+import Image from "next/image";
+// motion helps us add spring-based hovering effects to individual cards
+import { motion } from "framer-motion";
+// gsap is the animation engine, ScrollTrigger allows scroll-driven animations
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { Layers, Activity, Eye, Zap } from "lucide-react";
 
 export default function BentoGrid() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("is-visible");
-          }
-        });
-      },
-      { threshold: 0.05 }
+    // 1. GSAP & SCROLLTRIGGER ENTEGRASYONU:
+    // ScrollTrigger eklentisini kaydediyoruz (eğer global olarak kayıtlı değilse garanti altına almak için)
+    gsap.registerPlugin(ScrollTrigger);
+
+    const cards = containerRef.current?.querySelectorAll(".bento-card");
+    if (!cards) return;
+
+    // 2. KAYDIRMA TABANLI ANİMASYON (SCROLL-DRIVEN STAGGER):
+    // Kullanıcı sayfayı aşağı kaydırıp bu bölüme geldiğinde, kartlar sırayla aşağıdan yukarı doğru süzülür.
+    gsap.fromTo(
+      cards,
+      { 
+        opacity: 0, 
+        y: 80 
+      }, // Başlangıç değerleri (görünmez ve 80 piksel aşağıda)
+      {
+        opacity: 1,
+        y: 0, // Hedef değerler (tam görünür ve orijinal pozisyonunda)
+        duration: 1.0,
+        stagger: 0.18, // Her bir kartın animasyonu arasında 0.18 saniye gecikme bırakarak akıcı bir sıra yaratır
+        ease: "power4.out", // Yumuşak bir yavaşlama eğrisi (Awwwards standartlarında)
+        scrollTrigger: {
+          trigger: containerRef.current, // Tetikleyici olarak bu bölümün en üst konteynerini seçiyoruz
+          start: "top 80%", // Sayfanın %80'i bu bölüme ulaştığında animasyon başlar
+          toggleActions: "play none none none", // Sadece ilk girişte bir kez oynatır
+        },
+      }
     );
-
-    const elements = containerRef.current?.querySelectorAll(".animate-on-scroll");
-    elements?.forEach((el) => observer.observe(el));
-
-    return () => observer.disconnect();
   }, []);
+
+  // Framer Motion yaylanma (spring) fiziği ayarı
+  const cardHoverSpring = {
+    type: "spring" as const,
+    stiffness: 300,
+    damping: 22,
+  };
 
   return (
     <section
       ref={containerRef}
       id="the-bento"
-      className="py-32 px-6 border-t-2 border-white bg-black overflow-hidden"
+      className="py-32 px-6 border-t border-white/10 bg-[#050510] relative overflow-hidden"
     >
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto relative z-10">
+        
         {/* Title Block */}
         <div className="mb-20">
-          <span className="text-xs tracking-[0.25em] font-sans font-extralight text-accent block mb-4">
-            SYSTEM PARAMETERS
+          <span className="text-xs tracking-[0.25em] font-sans font-light text-cyanAccent block mb-4">
+            ARCHITECTURE MATRIX
           </span>
           <h2 className="text-[clamp(2.5rem,6vw,5.5rem)] font-serif font-black leading-[0.9] text-white tracking-[-0.03em]">
-            THE BENTO <br />
-            ARCHITECTURE
+            THE GRID <br />
+            EXPERIENCE
           </h2>
         </div>
 
         {/* 12-Column Asymmetrical Bento Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
           
-          {/* Card 1: 8 Columns - Thermal Dynamics */}
-          <div
-            className="animate-on-scroll md:col-span-8 border-2 border-white p-8 md:p-12 flex flex-col justify-between hover:border-accent transition-colors duration-500 group relative bg-black"
-            style={{ transitionDelay: "0.1s" }}
-            data-cursor="snap"
+          {/* Card 1: 8 Columns - Fluid Technology */}
+          <motion.div
+            whileHover={{ y: -8 }}
+            transition={cardHoverSpring}
+            className="bento-card md:col-span-8 border border-white/10 rounded-3xl p-8 md:p-12 flex flex-col justify-between bg-white/5 relative group overflow-hidden"
+            data-cursor="pointer"
           >
+            {/* Soft decorative background glows inside cards */}
+            <div className="absolute -right-20 -top-20 w-60 h-60 rounded-full bg-cyanAccent/5 filter blur-3xl group-hover:bg-cyanAccent/10 transition-colors duration-500" />
+            
             <div>
-              <div className="w-12 h-12 border border-white flex items-center justify-center text-white mb-8 group-hover:border-accent group-hover:text-accent transition-colors duration-300">
-                <Thermometer size={20} />
+              <div className="w-12 h-12 rounded-2xl border border-cyanAccent/30 flex items-center justify-center text-cyanAccent mb-8 bg-cyanAccent/5">
+                <Layers size={20} />
               </div>
               <h3 className="text-2xl md:text-3xl font-serif text-white tracking-tight mb-4">
-                THERMAL RADIATION DYNAMICS
+                ORGANIC LIQUID DYNAMICS
               </h3>
-              <p className="text-sm font-sans font-extralight leading-relaxed text-white/70 max-w-xl">
-                Operating at peak efficiency, our core radiation modules distribute heat evenly across 12 custom fins. This architecture eliminates heat soak and ensures thermodynamic stability under heavy loads.
+              <p className="text-sm font-sans font-light leading-relaxed text-white/70 max-w-xl">
+                Our dynamic 3D simulation utilizes highly realistic vertex distortion. As you move the mouse, the metallic shape calculates custom vector curves, reacting like fluid magnetic core nodes in real time.
               </p>
             </div>
             
-            <div className="mt-12 flex items-center justify-between border-t border-white/20 pt-6">
-              <span className="text-[10px] font-mono text-white/40 tracking-wider">MOD_ID // TH-X4</span>
-              <span className="text-xs font-sans font-semibold text-accent tracking-widest group-hover:translate-x-2 transition-transform duration-300">
-                ACTIVE
+            <div className="mt-12 flex items-center justify-between border-t border-white/10 pt-6">
+              <span className="text-[10px] font-mono text-white/40 tracking-wider">CORE // 3D_STAGE</span>
+              <span className="text-xs font-sans font-semibold text-cyanAccent tracking-widest">
+                ONLINE
               </span>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Card 2: 4 Columns - Metric */}
-          <div
-            className="animate-on-scroll md:col-span-4 border-2 border-white p-8 flex flex-col justify-between hover:bg-white hover:text-black transition-all duration-500 group bg-black"
-            style={{ transitionDelay: "0.2s" }}
-            data-cursor="snap"
+          {/* Card 2: 4 Columns - Metric block */}
+          <motion.div
+            whileHover={{ y: -8 }}
+            transition={cardHoverSpring}
+            className="bento-card md:col-span-4 border border-white/10 rounded-3xl p-8 flex flex-col justify-between bg-white/5 group relative overflow-hidden"
+            data-cursor="pointer"
           >
+            <div className="absolute -left-20 -bottom-20 w-48 h-48 rounded-full bg-coralAccent/5 filter blur-3xl" />
+            
             <div>
-              <div className="w-12 h-12 border border-white group-hover:border-black flex items-center justify-center mb-8 transition-colors duration-300">
-                <Wind size={20} />
+              <div className="w-12 h-12 rounded-2xl border border-coralAccent/30 flex items-center justify-center text-coralAccent mb-8 bg-coralAccent/5">
+                <Activity size={20} />
               </div>
-              <span className="text-[10px] font-mono text-white/50 group-hover:text-black/50 tracking-wider block mb-2">
-                ROUGHNESS SPECIFICATION
+              <span className="text-[10px] font-mono text-white/40 tracking-wider block mb-2">
+                REFRACTION INDEX
               </span>
-              <div className="text-6xl md:text-7xl font-serif font-black tracking-tighter mb-4">
-                0.12
+              <div className="text-6xl md:text-7xl font-serif font-black tracking-tighter text-white group-hover:text-cyanAccent transition-colors duration-300">
+                0.96
               </div>
             </div>
-            <p className="text-xs font-sans font-extralight tracking-wider leading-relaxed text-white/70 group-hover:text-black/80">
-              Low-roughness metallic parameters optimized for maximum photon reflection.
+            <p className="text-xs font-sans font-light tracking-wider leading-relaxed text-white/70">
+              Low light roughness coefficients optimized for glowing WebGL neon ambient lighting.
             </p>
-          </div>
+          </motion.div>
 
-          {/* Card 3: 4 Columns - System Performance */}
-          <div
-            className="animate-on-scroll md:col-span-4 border-2 border-white p-8 flex flex-col justify-between hover:border-accent transition-colors duration-500 group bg-black"
-            style={{ transitionDelay: "0.3s" }}
-            data-cursor="snap"
+          {/* Card 3: 4 Columns - Visual Texture */}
+          <motion.div
+            whileHover={{ y: -8 }}
+            transition={cardHoverSpring}
+            className="bento-card md:col-span-4 border border-white/10 rounded-3xl p-8 flex flex-col justify-between bg-white/5 group relative overflow-hidden"
+            data-cursor="pointer"
           >
             <div>
-              <div className="w-12 h-12 border border-white flex items-center justify-center text-white mb-8 group-hover:border-accent group-hover:text-accent transition-colors duration-300">
-                <Cpu size={20} />
+              <div className="w-12 h-12 rounded-2xl border border-white/20 flex items-center justify-center text-white mb-8 bg-white/5">
+                <Zap size={20} />
               </div>
               <h3 className="text-xl font-serif text-white mb-2">
-                FUSION LOGIC
+                SPRING RESPONSE
               </h3>
-              <p className="text-xs font-sans font-extralight text-white/70 leading-relaxed">
-                Direct integration with hardware layer drivers for real-time monitoring and dynamic speed profiles.
+              <p className="text-xs font-sans font-light text-white/70 leading-relaxed">
+                Framer Motion physics engine calculates elastic hover motions instantly using customized stiffness.
               </p>
             </div>
-            <div className="mt-8 border-t border-white/20 pt-4 flex items-center justify-between">
-              <span className="text-[10px] font-mono text-white/40">SYS_TEMP</span>
-              <span className="text-xs font-mono text-white group-hover:text-accent transition-colors duration-300">
-                34.8°C
+            <div className="mt-8 border-t border-white/10 pt-4 flex items-center justify-between">
+              <span className="text-[10px] font-mono text-white/40">SPRING_LATENCY</span>
+              <span className="text-xs font-mono text-cyanAccent font-semibold">
+                0.01 MS
               </span>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Card 4: 8 Columns - Interactive Stage Guide */}
-          <div
-            className="animate-on-scroll md:col-span-8 border-2 border-white p-8 md:p-12 flex flex-col justify-between hover:border-accent transition-colors duration-500 group relative bg-black"
-            style={{ transitionDelay: "0.4s" }}
-            data-cursor="snap"
+          {/* Card 4: 8 Columns - Organic Natural Texture & SEO */}
+          <motion.div
+            whileHover={{ y: -8 }}
+            transition={cardHoverSpring}
+            className="bento-card md:col-span-8 border border-white/10 rounded-3xl p-8 md:p-12 flex flex-col justify-between bg-white/5 relative group overflow-hidden"
+            data-cursor="pointer"
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-              <div>
-                <div className="w-12 h-12 border border-white flex items-center justify-center text-white mb-8 group-hover:border-accent group-hover:text-accent transition-colors duration-300">
-                  <ShieldAlert size={20} />
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+              
+              {/* Left Column in Card: Content */}
+              <div className="md:col-span-6">
+                <div className="w-12 h-12 rounded-2xl border border-cyanAccent/30 flex items-center justify-center text-cyanAccent mb-8 bg-cyanAccent/5">
+                  <Eye size={20} />
                 </div>
                 <h3 className="text-2xl font-serif text-white tracking-tight mb-4">
-                  THE THREE-D BACKGROUND STAGE
+                  NATURAL SYNERGY
                 </h3>
-                <p className="text-xs font-sans font-extralight leading-relaxed text-white/70">
-                  Move your mouse across the browser window to see the metallic geometry warp, rotate, and interact with the custom viewport. Click and drag on empty spots of the viewport for perspective change.
+                <p className="text-xs font-sans font-light leading-relaxed text-white/70">
+                  We blend synthetic code with natural, high-resolution organic textures. See how glowing cyan crystal veins mimic technology flowing inside raw stone.
                 </p>
               </div>
 
-              {/* Graphical Brutalist Box */}
-              <div className="border-2 border-dashed border-white/30 p-6 flex flex-col items-center justify-center text-center relative overflow-hidden group-hover:border-accent/50 transition-colors duration-300">
-                <div className="absolute top-0 left-0 border-r border-b border-white p-1 text-[8px] font-mono text-white/50">
-                  REF_01
+              {/* Right Column in Card: Natural Texture Image with SEO Block */}
+              <div className="md:col-span-6 flex flex-col">
+                <div className="relative w-full h-[180px] rounded-2xl overflow-hidden border border-white/10">
+                  <Image
+                    src="/images/stone-vein.jpg"
+                    alt="Natural rock stone marble granite texture with glowing turquoise crystal mineral veins"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 30vw"
+                    className="object-cover transition-transform duration-700 ease-brutalist group-hover:scale-105"
+                  />
+                  {/* Soft gradient overlay on card image */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#050510]/50 to-transparent pointer-events-none" />
                 </div>
-                <div className="text-[10px] font-mono text-accent mb-2 tracking-widest animate-pulse">
-                  [LOCKED ON MOUSE]
-                </div>
-                <div className="text-xs font-sans font-extralight text-white/40">
-                  X: POINTER_COORD <br />
-                  Y: POINTER_COORD
+                
+                {/* 2-Sentence SEO Block for the Image */}
+                <div className="mt-3">
+                  <p className="text-[10px] font-sans font-light tracking-[0.08em] leading-relaxed text-white/40">
+                    High-resolution organic textures featuring natural stone granite patterns with turquoise crystal veins. Elevate creative web designs using natural backgrounds and neon lighting effects.
+                  </p>
                 </div>
               </div>
             </div>
 
-            <div className="mt-8 border-t border-white/20 pt-6 flex items-center justify-between">
-              <span className="text-[10px] font-mono text-white/40 tracking-wider">3D_STAGE // CONFIG_LOADED</span>
-              <span className="text-xs font-sans text-white/80 group-hover:text-accent transition-colors duration-300">
-                INTERACTIVE CANVAS ACTIVE
+            <div className="mt-8 border-t border-white/10 pt-6 flex items-center justify-between">
+              <span className="text-[10px] font-mono text-white/40 tracking-wider">TEXTURE // STONE_CRYSTAL</span>
+              <span className="text-xs font-sans text-coralAccent font-semibold">
+                ACTIVE SHADER
               </span>
             </div>
-          </div>
+          </motion.div>
           
         </div>
       </div>

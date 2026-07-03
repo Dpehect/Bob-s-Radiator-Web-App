@@ -1,6 +1,11 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
+// framer-motion is utilized for hover micro-interactions
+import { motion } from "framer-motion";
+// gsap & scrolltrigger are used to animate elements as they enter the screen
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Navigation from "@/components/Navigation";
 import HeroSection from "@/components/HeroSection";
 import BentoGrid from "@/components/BentoGrid";
@@ -11,104 +16,126 @@ export default function Home() {
   const specsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Scroll reveal observer for Specifications
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("is-visible");
-          }
-        });
-      },
-      { threshold: 0.1 }
+    // 1. GSAP SCROLLTRIGGER ENTEGRASYONU:
+    // Sayfa aşağı kaydırıldığında teknik özellikler tablosunun satırlarını sırayla açığa çıkarırız.
+    gsap.registerPlugin(ScrollTrigger);
+
+    const specRows = specsRef.current?.querySelectorAll(".spec-row");
+    if (!specRows) return;
+
+    // Satırları tek tek aşağıdan yukarı doğru süzerek görünür yaparız (Scroll-driven entry)
+    gsap.fromTo(
+      specRows,
+      { opacity: 0, x: -30 }, // Başlangıç: Görünmez ve 30px solda
+      {
+        opacity: 1,
+        x: 0, // Hedef: Tam görünür ve yerinde
+        duration: 0.8,
+        stagger: 0.1, // Satırlar arasında 0.1 saniye stagger (kademeli gecikme) oluşturur
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: specsRef.current,
+          start: "top 75%", // Bölüm ekranın %75'ine geldiğinde tetiklenir
+          toggleActions: "play none none none",
+        },
+      }
     );
-
-    const elements = specsRef.current?.querySelectorAll(".animate-on-scroll");
-    elements?.forEach((el) => observer.observe(el));
-
-    return () => observer.disconnect();
   }, []);
+
+  // Spring animations for rows
+  const rowHoverSpring = {
+    type: "spring" as const,
+    stiffness: 400,
+    damping: 20,
+  };
 
   return (
     <>
-      {/* 3D background stage - fixed overlay behind everything */}
+      {/* 3D WebGL Canvas Backdrop (WebGL 3D Canlı Arka Plan) */}
       <ThreeDStage />
 
-      {/* Foreground scrollable content */}
+      {/* Foreground Interactive Page Layout (Ön Plan İçerik Akışı) */}
       <div className="relative z-10 flex flex-col min-h-screen">
         
-        {/* Navigation Bar */}
+        {/* Navigation Bar (Gezinti Menüsü) */}
         <Navigation />
 
         <main className="flex-1">
-          {/* Hero Section */}
+          {/* Hero Section (Karşılama Ekranı) */}
           <HeroSection />
 
-          {/* Bento Grid Features Section */}
+          {/* Bento Grid (Özellikler Ağı) */}
           <BentoGrid />
 
-          {/* Specifications Section (Typographic Asymmetrical Layout) */}
+          {/* Technical Specifications Section (Teknik Detay Tablosu) */}
           <section
             ref={specsRef}
             id="specifications"
-            className="py-32 px-6 border-t-2 border-white bg-black relative"
+            className="py-32 px-6 border-t border-white/10 bg-[#050510] relative"
           >
-            <div className="max-w-7xl mx-auto">
+            {/* Ambient Background Glow (Ortam Işığı) */}
+            <div className="ambient-glow-cyan top-10 left-10" />
+
+            <div className="max-w-7xl mx-auto relative z-10">
               
-              {/* Header */}
+              {/* Heading */}
               <div className="mb-20">
-                <span className="text-xs tracking-[0.25em] font-sans font-extralight text-accent block mb-4">
-                  METRIC MATRIX
+                <span className="text-xs tracking-[0.25em] font-sans font-light text-coralAccent block mb-4">
+                  SPECIFICATION LEDGER
                 </span>
                 <h2 className="text-[clamp(2.5rem,6vw,5.5rem)] font-serif font-black leading-[0.9] text-white tracking-[-0.03em]">
-                  TECHNICAL <br />
-                  SPECIFICATIONS
+                  SYSTEM <br />
+                  PARAMETERS
                 </h2>
               </div>
 
-              {/* Asymmetrical Spec Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+              {/* Asymmetrical Layout */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
                 
-                {/* Left Description block */}
+                {/* Left Description and Warning Block */}
                 <div className="lg:col-span-4 flex flex-col justify-between">
-                  <p className="text-sm font-sans font-extralight leading-relaxed text-white/70 max-w-sm">
-                    EACH HOUSING IS MACHINED FROM A SINGLE BLOCK OF AEROSPACE-GRADE ALUMINUM AND HAND-FINISHED TO EXACTING TOLERANCES. THERE ARE NO PLASTIC CLIPS. NO WEAK POINTS.
+                  <p className="text-sm font-sans font-light leading-relaxed text-white/70 max-w-sm">
+                    EVERY FUSION HOUSING IS CNC-MACHINED FROM SINGLE BLOCKS OF AEROSPACE ALUMINUM AND HAND-POLISHED FOR HIGHEST SPECTRUM REFLECTION.
                   </p>
                   
-                  <div className="hidden lg:block border-2 border-white p-6 mt-12 bg-black max-w-max hover:border-accent transition-colors duration-300" data-cursor="snap">
-                    <span className="text-[10px] font-mono text-accent block mb-2">[WARNING]</span>
-                    <span className="text-xs font-sans font-extralight text-white">
+                  {/* Glowing alert box using spring motion */}
+                  <motion.div
+                    whileHover={{ scale: 1.03 }}
+                    className="border border-coralAccent/30 bg-coralAccent/5 p-6 mt-12 rounded-2xl max-w-max"
+                  >
+                    <span className="text-[10px] font-mono text-coralAccent block mb-2">[LIMIT WARNING]</span>
+                    <span className="text-xs font-sans font-light text-white">
                       DO NOT OPERATE BEYOND THERMAL LIMITS.
                     </span>
-                  </div>
+                  </motion.div>
                 </div>
 
-                {/* Right Spec Table - 12-column subgrid layout */}
-                <div className="lg:col-span-8 flex flex-col gap-6 w-full">
+                {/* Right Specification Table (Spring-interactive rows) */}
+                <div className="lg:col-span-8 flex flex-col gap-4 w-full">
                   {[
-                    { label: "MATERIAL", value: "AEROSPACE ALUMINUM 6061-T6" },
-                    { label: "WEIGHT", value: "4.85 KG (EXCLUDING COOLANT)" },
-                    { label: "COOLING TYPE", value: "FUSION LIQUID LOOP DIRECT" },
-                    { label: "COMPATIBILITY", value: "INTEL LGA1700 / AMD AM5" },
-                    { label: "FIN COUNT", value: "48 MICRO-FINS PER CHANNEL" },
-                    { label: "FIN THICKNESS", value: "0.2 MM ULTRA-SLIM PROFILE" },
-                    { label: "MAX DISSIPATION", value: "450 WATTS THERMAL CAPACITY" },
+                    { label: "METALLURGY", value: "CNC ANODIZED ALUMINUM 6061-T6" },
+                    { label: "FUSION CORE", value: "FLUID VECTOR DISPLACEMENT ENGINE" },
+                    { label: "WebGL RENDERING", value: "THREE.JS / REACT THREE FIBER v9" },
+                    { label: "INTERACTIONS", value: "FRAMER MOTION SPRING PHYSICS" },
+                    { label: "SCROLL ENGINE", value: "GSAP SCROLLTRIGGER STAGGER" },
+                    { label: "COOLING INDEX", value: "480 WATTS MAX THERMAL LOAD" },
                   ].map((spec, idx) => (
-                    <div
+                    <motion.div
                       key={spec.label}
-                      className="animate-on-scroll flex items-center justify-between py-6 border-b border-white/20 group hover:border-accent transition-colors duration-300"
-                      style={{ transitionDelay: `${idx * 0.05}s` }}
+                      className="spec-row flex items-center justify-between py-6 border-b border-white/10 group hover:border-cyanAccent transition-colors duration-300"
+                      whileHover={{ x: 8 }}
+                      transition={rowHoverSpring}
                     >
-                      <span className="text-xs font-mono text-white/50 group-hover:text-accent transition-colors duration-300">
+                      <span className="text-xs font-mono text-white/40 group-hover:text-cyanAccent transition-colors duration-300">
                         // 0{idx + 1} {spec.label}
                       </span>
                       <span 
-                        className="text-sm md:text-base font-sans font-light tracking-wide text-white group-hover:translate-x-[-8px] transition-transform duration-300"
-                        data-cursor="snap"
+                        className="text-sm md:text-base font-sans font-light tracking-wide text-white"
+                        data-cursor="pointer"
                       >
                         {spec.value}
                       </span>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
 
@@ -117,7 +144,7 @@ export default function Home() {
           </section>
         </main>
 
-        {/* Footer */}
+        {/* Footer (Sayfa Alt Bilgisi) */}
         <Footer />
       </div>
     </>

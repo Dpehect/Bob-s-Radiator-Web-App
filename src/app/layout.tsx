@@ -3,8 +3,9 @@ import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import SmoothScroll from "@/components/SmoothScroll";
 import CustomCursor from "@/components/CustomCursor";
+import GsapInitializer from "@/components/GsapInitializer";
 
-// Load Google Fonts for typographic hierarchy
+// Load Google Fonts for Awwwards typographic hierarchy
 const playfairSerif = Playfair_Display({
   variable: "--font-serif",
   subsets: ["latin"],
@@ -15,18 +16,17 @@ const playfairSerif = Playfair_Display({
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-sans",
   subsets: ["latin"],
-  weight: ["200", "300", "400", "600"],
+  weight: ["200", "300", "400", "500", "600"],
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "BOB'S RADIATOR // Raw Digital Brutalist Experience",
-  description: "A high-end, award-winning digital brutalist showcase combining cold metallurgy, raw performance, and high-contrast web architecture.",
-  keywords: ["brutalist", "digital art", "3D web", "react three fiber", "next.js 15", "web design"],
-  authors: [{ name: "Lead UI/UX Architect" }],
+  title: "BOB'S RADIATOR // Awwwards-style Dynamic Digital Experience",
+  description: "Experience the living harmony of cold technology and organic touch. Featuring advanced R3F liquid distortions, GSAP scroll triggers, and Framer Motion spring physics.",
+  keywords: ["Awwwards website", "Creative developer", "3D web design", "GSAP ScrollTrigger", "Framer Motion", "React Three Fiber"],
   openGraph: {
-    title: "BOB'S RADIATOR // Digital Brutalism",
-    description: "A high-end, award-winning digital brutalist showcase combining cold metallurgy and raw performance.",
+    title: "BOB'S RADIATOR // Creative Digital Experience",
+    description: "A dynamic portfolio combining advanced WebGL shaders, scroll-driven layouts, and elastic physics.",
     type: "website",
   },
 };
@@ -41,8 +41,11 @@ export default function RootLayout({
       lang="en"
       className={`${playfairSerif.variable} ${plusJakartaSans.variable} scroll-smooth`}
     >
-      <body className="bg-black text-white antialiased min-h-screen relative selection:bg-accent selection:text-black">
-        {/* Custom cursor ring (only active on fine pointer devices) */}
+      <body className="bg-[#050510] text-white antialiased min-h-screen relative selection:bg-cyanAccent selection:text-black">
+        {/* Register GSAP plugins on client-side mount */}
+        <GsapInitializer />
+
+        {/* Custom elastic cursor ring (only active on fine pointer devices like mouse) */}
         <CustomCursor />
         
         {/* Lenis Smooth Scroll momentum wrapper */}

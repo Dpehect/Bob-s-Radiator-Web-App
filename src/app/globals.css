@@ -1,33 +1,22 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #000000;
+  --color-background: #050510;
   --color-foreground: #ffffff;
-  --color-accent: #ff4500;
+  --color-cyanAccent: #00f5ff;
+  --color-coralAccent: #ff6b6b;
 
   --font-serif: var(--font-serif), serif;
   --font-sans: var(--font-sans), sans-serif;
 
   --transition-timing-function-brutalist: cubic-bezier(0.16, 1, 0.3, 1);
-
-  --animate-fade-in-up: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-
-  @keyframes fadeInUp {
-    0% {
-      opacity: 0;
-      transform: translateY(40px);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
 }
 
 :root {
-  --background: #000000;
+  --background: #050510;
   --foreground: #ffffff;
-  --accent: #ff4500;
+  --cyan-accent: #00f5ff;
+  --coral-accent: #ff6b6b;
 }
 
 /* Global Reset & Base Styles */
@@ -60,7 +49,7 @@ body {
   }
 }
 
-/* Global Noise Texture Overlay */
+/* Global Noise Texture Overlay (Adds organic depth / grain) */
 body::before {
   content: "";
   position: fixed;
@@ -76,60 +65,61 @@ body::before {
   z-index: 9999;
 }
 
-/* Custom Brutalist Scrollbar */
+/* Glowing Background Radial Accents (Creates Awwwards-style night atmosphere) */
+.ambient-glow-cyan {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 245, 255, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ambient-glow-coral {
+  position: absolute;
+  width: 450px;
+  height: 450px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 107, 107, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Custom Creative Scrollbar */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #000000;
-  border-left: 2px solid #ffffff;
+  background: #050510;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #ffffff;
-  border: 2px solid #000000;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  border: 2px solid #050510;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--accent);
+  background: var(--cyan-accent);
 }
 
-/* Brutalist Border Utils */
-.border-brutal {
-  border: 2px solid #ffffff;
-}
-
-.border-brutal-orange {
-  border: 2px solid var(--accent);
-}
-
-/* Typography Overrides */
+/* Typography Hierarchy - Clamp fluid scale */
 h1,
 .font-serif-title {
   font-family: var(--font-serif), serif;
   font-weight: 700;
-  letter-spacing: -0.05em;
-  line-height: 0.85;
-}
-
-/* Entrance Animation Styles */
-.animate-on-scroll {
-  opacity: 0;
-  transform: translateY(40px);
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity, transform;
-}
-
-.animate-on-scroll.is-visible {
-  opacity: 1;
-  transform: translateY(0);
+  letter-spacing: -0.04em;
+  line-height: 0.9;
 }
 
 /* Selection highlight */
 ::selection {
-  background-color: var(--accent);
-  color: #000000;
+  background-color: var(--cyan-accent);
+  color: #050510;
 }
