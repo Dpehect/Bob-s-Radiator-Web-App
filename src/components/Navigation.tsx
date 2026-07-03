@@ -1,52 +1,54 @@
 "use client";
 
 import React, { useState } from "react";
-// motion allows us to add physics and spring effects to elements
+// motion helps build playful spring physical transitions for layout tags
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Disc } from "lucide-react";
+import { Menu, X, Smile } from "lucide-react";
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Define spring settings for menu item hovers
-  const hoverSpring = {
+  // High-stiffness spring configuration for toy-like snappiness
+  const menuSpring = {
     type: "spring" as const,
-    stiffness: 400,
-    damping: 15,
+    stiffness: 450,
+    damping: 18,
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-[#050510]/80 backdrop-blur-md border-b border-white/10">
-      <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+    <header className="sticky top-6 z-50 w-full px-6">
+      <div className="max-w-7xl mx-auto bg-[#faf5ef]/90 backdrop-blur-md border border-[#3f2218]/15 rounded-full px-8 h-18 flex items-center justify-between shadow-pillow">
         
-        {/* Logo with interactive spring scale on hover */}
+        {/* Playful logo with spring scaling on tap/hover */}
         <motion.a
           href="#"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          transition={hoverSpring}
-          className="text-xl font-serif tracking-[-0.04em] text-white hover:text-cyanAccent transition-colors duration-300 flex items-center gap-2"
+          whileHover={{ scale: 1.06, rotate: 3 }}
+          whileTap={{ scale: 0.94, rotate: -3 }}
+          transition={menuSpring}
+          className="text-lg font-serif font-black tracking-tight text-[#3f2218] hover:text-[#ff7da0] flex items-center gap-2"
           data-cursor="pointer"
         >
-          <Disc className="text-cyanAccent animate-spin [animation-duration:10s]" size={18} />
+          <Smile className="text-yellowAccent animate-bounce [animation-duration:2s]" size={20} />
           BOB&apos;S RADIATOR
         </motion.a>
 
-        {/* Desktop navigation - interactive bouncing capsules */}
-        <nav className="hidden md:flex items-center gap-6">
+        {/* Desktop Navigation - Squishy spring buttons */}
+        <nav className="hidden md:flex items-center gap-4">
           {["EXPERIENCE", "THE BENTO", "SPECIFICATIONS", "CONTACT"].map((item, idx) => (
             <motion.a
               key={item}
               href={`#${item.toLowerCase().replace(" ", "-")}`}
+              // Playful "squish and stretch" on hover
               whileHover={{ 
-                scale: 1.08,
-                backgroundColor: idx === 3 ? "#ff6b6b" : "rgba(0, 245, 255, 0.15)",
-                color: idx === 3 ? "#ffffff" : "#00f5ff"
+                scaleX: 1.08,
+                scaleY: 0.94,
+                backgroundColor: idx === 3 ? "#ff8052" : "#ff7da0",
+                color: "#ffffff"
               }}
-              whileTap={{ scale: 0.95 }}
-              transition={hoverSpring}
-              className={`px-5 py-2 rounded-full text-xs font-sans tracking-[0.15em] font-medium text-white transition-colors duration-200 ${
-                idx === 3 ? "bg-cyanAccent text-[#050510] font-semibold" : "bg-white/5"
+              whileTap={{ scale: 0.92, scaleY: 1.08 }}
+              transition={menuSpring}
+              className={`px-5 py-2.5 rounded-full text-xs font-sans tracking-[0.1em] font-bold text-[#3f2218] transition-colors duration-200 ${
+                idx === 3 ? "bg-pinkAccent text-white" : "bg-[#3f2218]/5"
               }`}
               data-cursor="pointer"
             >
@@ -55,11 +57,11 @@ export default function Navigation() {
           ))}
         </nav>
 
-        {/* Mobile menu toggle */}
+        {/* Mobile menu toggle button */}
         <motion.button
-          whileTap={{ scale: 0.9 }}
+          whileTap={{ scale: 0.88 }}
           onClick={() => setIsOpen(!isOpen)}
-          className="md:hidden p-2 text-white bg-white/5 rounded-full hover:bg-white/10"
+          className="md:hidden p-2 text-[#3f2218] bg-[#3f2218]/5 rounded-full hover:bg-[#3f2218]/10"
           aria-label="Toggle navigation"
           data-cursor="pointer"
         >
@@ -67,25 +69,25 @@ export default function Navigation() {
         </motion.button>
       </div>
 
-      {/* Mobile drawer with slide-in animation */}
+      {/* Mobile drawer with squishy spring slide down */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ type: "spring", stiffness: 200, damping: 20 }}
-            className="md:hidden border-t border-white/10 bg-[#050510] overflow-hidden"
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 350, damping: 22 }}
+            className="md:hidden mt-2 border border-[#3f2218]/15 bg-[#faf5ef] rounded-[24px] overflow-hidden shadow-pillow"
           >
-            <div className="flex flex-col p-6 gap-4">
+            <div className="flex flex-col p-6 gap-3">
               {["EXPERIENCE", "THE BENTO", "SPECIFICATIONS", "CONTACT"].map((item, idx) => (
                 <motion.a
                   key={item}
                   href={`#${item.toLowerCase().replace(" ", "-")}`}
                   onClick={() => setIsOpen(false)}
-                  whileTap={{ scale: 0.98 }}
-                  className={`py-4 px-6 rounded-xl text-sm font-serif tracking-wider text-white ${
-                    idx === 3 ? "bg-coralAccent text-white" : "bg-white/5"
+                  whileTap={{ scale: 0.97 }}
+                  className={`py-4 px-6 rounded-2xl text-sm font-serif font-black tracking-wide text-[#3f2218] ${
+                    idx === 3 ? "bg-orangeAccent text-white" : "bg-[#3f2218]/5"
                   }`}
                 >
                   {item}

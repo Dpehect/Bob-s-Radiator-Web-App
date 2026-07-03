@@ -16,17 +16,17 @@ const playfairSerif = Playfair_Display({
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-sans",
   subsets: ["latin"],
-  weight: ["200", "300", "400", "500", "600"],
+  weight: ["300", "400", "600", "700", "800"],
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "BOB'S RADIATOR // Awwwards-style Dynamic Digital Experience",
-  description: "Experience the living harmony of cold technology and organic touch. Featuring advanced R3F liquid distortions, GSAP scroll triggers, and Framer Motion spring physics.",
-  keywords: ["Awwwards website", "Creative developer", "3D web design", "GSAP ScrollTrigger", "Framer Motion", "React Three Fiber"],
+  title: "BOB'S RADIATOR // Playful Warm Digital Art Experience",
+  description: "A joyful creative portfolio featuring wiggling 3D jelly spheres, squishy spring-physics buttons, velocity-based custom bubble cursors, and sunny pastel sunset gradients.",
+  keywords: ["Awwwards website", "Playful web design", "Creative developer", "GSAP ScrollTrigger", "Framer Motion", "React Three Fiber"],
   openGraph: {
-    title: "BOB'S RADIATOR // Creative Digital Experience",
-    description: "A dynamic portfolio combining advanced WebGL shaders, scroll-driven layouts, and elastic physics.",
+    title: "BOB'S RADIATOR // Bouncy Digital Playground",
+    description: "Experience the living harmony of warm sunset tones, soft pillow layouts, and interactive WebGL jelly components.",
     type: "website",
   },
 };
@@ -41,11 +41,11 @@ export default function RootLayout({
       lang="en"
       className={`${playfairSerif.variable} ${plusJakartaSans.variable} scroll-smooth`}
     >
-      <body className="bg-[#050510] text-white antialiased min-h-screen relative selection:bg-cyanAccent selection:text-black">
-        {/* Register GSAP plugins on client-side mount */}
+      <body className="bg-[#faf5ef] text-[#3f2218] antialiased min-h-screen relative selection:bg-pinkAccent selection:text-white">
+        {/* Register GSAP plugins on client mount */}
         <GsapInitializer />
 
-        {/* Custom elastic cursor ring (only active on fine pointer devices like mouse) */}
+        {/* Custom stretchy bubble cursor ring */}
         <CustomCursor />
         
         {/* Lenis Smooth Scroll momentum wrapper */}
