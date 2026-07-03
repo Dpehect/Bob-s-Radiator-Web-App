@@ -8,40 +8,32 @@ import { fadeUp } from "@/lib/motion";
 
 interface GalleryCard {
   label: string;
-  rotation: number;
-  translateY?: number;
-  gradient: string;
   sub: string;
   src: string;
+  gridSpan: string; // Tailwind Grid Span configurations for Bento Grid layout
 }
 
 /* ─── Gallery card data ─── */
 const galleryCards: GalleryCard[] = [
   {
-    label: "The Workshop",
-    sub: "Karaköy 1952",
-    rotation: 3.5,
-    gradient: "from-charcoal via-charcoal-light to-charcoal",
+    label: "The Karaköy Workshop",
+    sub: "Est. 1952 — Karaköy, Istanbul",
     src: "/bob_workshop.jpg",
+    gridSpan: "md:col-span-2 md:row-span-1 h-[300px] md:h-auto",
   },
   {
     label: "Master Cast",
-    sub: "Mehmet Boran",
-    rotation: -2,
-    translateY: 15,
-    gradient: "from-deep-red to-terracotta",
+    sub: "Mehmet Boran casting raw iron patterns",
     src: "/radiator_brass.jpg",
+    gridSpan: "md:col-span-1 md:row-span-2 h-[400px] md:h-auto",
   },
   {
-    label: "Living Heritage",
-    sub: "70 Years Legacy",
-    rotation: 5,
-    gradient: "from-charcoal-light to-brass/35",
+    label: "Metallurgical Heritage",
+    sub: "Decades of manual heat craftsmanship",
     src: "/artisan_bench.jpg",
+    gridSpan: "md:col-span-2 md:row-span-1 h-[300px] md:h-auto",
   },
 ];
-
-const cardSpring = { type: "spring" as const, stiffness: 200, damping: 22 };
 
 export default function About() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -51,7 +43,7 @@ export default function About() {
     <section
       id="story"
       ref={sectionRef}
-      className="bg-warm-white py-[8vw] px-[5vw] relative overflow-visible text-black-pure"
+      className="bg-warm-white py-section px-[5vw] relative overflow-visible text-black-pure"
     >
       {/* ── Organic Wave Cut from Hero ── */}
       <div className="absolute top-0 left-0 w-full h-[6vw] -translate-y-[99%] overflow-hidden pointer-events-none z-10">
@@ -88,7 +80,7 @@ export default function About() {
           animate={isInView ? "visible" : "hidden"}
           transition={{ delay: 0.3 }}
         >
-          <span className="font-display text-[64px] font-black text-electric-orange float-left mr-3 line-height-none mt-1">I</span>
+          <span className="font-display text-[64px] font-black text-electric-orange float-left mr-3 mt-1 leading-none">I</span>
           n 1952, in a narrow Karaköy workshop where the Bosphorus winds met the
           furnace heat, master ironworker Mehmet Boran cast his first radiator. He
           set the water temperature to exactly 82°C — the precise point where
@@ -102,7 +94,7 @@ export default function About() {
           animate={isInView ? "visible" : "hidden"}
           transition={{ delay: 0.4 }}
         >
-          <span className="font-display text-[64px] font-black text-black-pure float-left mr-3 line-height-none mt-1">S</span>
+          <span className="font-display text-[64px] font-black text-black-pure float-left mr-3 mt-1 leading-none">S</span>
           even decades later, every radiator we shape still
           carries that philosophy: heat should have memory, weight, and soul.
           Each metal vertical column is sand-cast, hand-filed, and individually
@@ -110,46 +102,43 @@ export default function About() {
         </motion.p>
       </div>
 
-      {/* ── Gallery Grid ── */}
-      <div className="flex flex-col md:flex-row justify-center items-center gap-6 md:gap-8 mt-20 max-w-5xl mx-auto">
+      {/* ── Bento-Box Layout Grid with Dense Autoresolution ── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:grid-rows-2 grid-flow-row-dense mt-24 max-w-5xl mx-auto overflow-x-visible">
         {galleryCards.map((card, i) => (
           <motion.div
             key={card.label}
             className={`
-              w-[clamp(240px,24vw,340px)] aspect-[3/4] rounded-[28px] overflow-hidden
-              relative group bg-gradient-to-br ${card.gradient}
-              border border-cream/5 p-6 flex flex-col justify-between
-              cursor-pointer shadow-[0_10px_35px_rgba(28,24,20,0.06)]
+              ${card.gridSpan}
+              relative rounded-[32px] overflow-visible group bg-charcoal
+              border border-black-pure/5 flex flex-col justify-between p-8
+              cursor-pointer transition-all duration-300 ease-out
             `}
-            initial={{
-              rotate: card.rotation,
-              y: card.translateY ?? 0,
-            }}
+            initial={{ opacity: 0, y: 55, skewY: 2.5 }}
+            whileInView={{ opacity: 1, y: 0, skewY: 0 }}
+            viewport={{ once: true, margin: "-10%" }}
             whileHover={{
-              rotate: 0,
-              scale: 1.05,
-              y: 0,
-              boxShadow: "0 30px 80px rgba(28, 24, 20, 0.22)",
+              scale: 1.02,
+              boxShadow: "20px 20px 0px var(--color-electric-orange)",
+              transition: { duration: 0.2, ease: "easeOut" },
             }}
-            transition={cardSpring}
           >
-            {/* Background Image Cover */}
-            <Image
-              src={card.src}
-              alt={card.label}
-              fill
-              sizes="(max-width: 768px) 100vw, 33vw"
-              className="absolute inset-0 w-full h-full object-cover z-0 
-                         transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]
-                         group-hover:scale-110"
-            />
-
-            {/* Dark tint overlay for reading contrast */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black-pure/90 via-black-pure/20 to-black-pure/40 z-5" />
+            {/* Bleeding Edge Image overflow wrapper */}
+            <div className="absolute inset-0 rounded-[32px] overflow-hidden z-0">
+              <Image
+                src={card.src}
+                alt={card.label}
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="absolute inset-0 w-full h-full object-cover z-0 
+                           transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]
+                           group-hover:scale-108"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black-pure/95 via-black-pure/20 to-black-pure/45 z-5" />
+            </div>
 
             {/* Corner Bracket Highlights */}
-            <div className="absolute top-4 left-4 w-4 h-4 border-t border-l border-cream/15 group-hover:border-cream/35 transition-colors z-10" />
-            <div className="absolute bottom-4 right-4 w-4 h-4 border-b border-r border-cream/15 group-hover:border-cream/35 transition-colors z-10" />
+            <div className="absolute top-5 left-5 w-4 h-4 border-t border-l border-cream/15 group-hover:border-cream/35 transition-colors z-10" />
+            <div className="absolute bottom-5 right-5 w-4 h-4 border-b border-r border-cream/15 group-hover:border-cream/35 transition-colors z-10" />
 
             {/* Top row */}
             <div className="flex justify-between items-start z-10">
@@ -157,19 +146,16 @@ export default function About() {
                 0{i + 1}
               </span>
               <span className="text-[9px] tracking-wider text-electric-orange font-sans uppercase font-bold">
-                Active Archive
+                Bento Spread / 0{i + 1}
               </span>
             </div>
 
-            {/* Warm ember hover glow inside card */}
-            <div className="absolute inset-0 bg-radial from-electric-orange/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-5" />
-
             {/* Bottom labels */}
-            <div className="space-y-1 z-10 text-warm-white">
-              <h3 className="font-display text-[22px] font-bold tracking-tight">
+            <div className="space-y-1.5 z-10 text-warm-white mt-16 md:mt-24">
+              <h3 className="font-display text-[24px] font-black tracking-tight leading-none uppercase">
                 {card.label}
               </h3>
-              <p className="text-cream/50 font-sans text-xs tracking-widest uppercase font-bold">
+              <p className="text-cream/55 font-sans text-xs tracking-widest uppercase font-bold">
                 {card.sub}
               </p>
             </div>

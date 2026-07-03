@@ -3,7 +3,7 @@
 import React, { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { PRODUCTS } from "@/lib/constants";
-import { fadeUp, staggerContainer, smoothSpring } from "@/lib/motion";
+import { fadeUp, staggerContainer } from "@/lib/motion";
 import AnimatedText from "@/components/ui/AnimatedText";
 
 interface ProductCardProps {
@@ -25,12 +25,12 @@ function ProductCard({ product, index }: ProductCardProps) {
       <motion.div
         initial={{ rotate: initialRotate }}
         whileHover={{
-          scale: 1.05,
-          y: -15,
+          scale: 1.02,
+          y: -8,
           rotate: 0,
-          boxShadow: "0 30px 80px rgba(255, 69, 0, 0.08)",
-          transition: smoothSpring,
+          boxShadow: "20px 20px 0px var(--color-electric-orange)",
         }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
         className="relative rounded-[32px] overflow-hidden bg-charcoal p-8 pb-7 
                    border border-electric-orange/5 hover:border-electric-orange/30
                    shadow-[0_10px_35px_rgba(0,0,0,0.4)]

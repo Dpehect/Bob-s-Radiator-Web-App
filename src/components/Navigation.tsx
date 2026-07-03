@@ -178,6 +178,7 @@ export default function Navigation() {
               relative py-2 px-5
               font-sans font-bold tracking-wider text-[10px] uppercase
               select-none outline-none border-none bg-transparent cursor-pointer
+              animate-cta-pulse rounded-full
             "
           >
             <motion.div

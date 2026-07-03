@@ -5,10 +5,12 @@ import { motion, useMotionValue, useSpring } from "framer-motion";
 
 /**
  * Custom spring trailing pointer cursor matching the Editorial layout style.
+ * Interactive click-growing scaling parameters are integrated.
  */
 export default function CustomCursor() {
   const [mounted, setMounted] = useState(false);
   const [hovered, setHovered] = useState(false);
+  const [clicked, setClicked] = useState(false);
   const [hidden, setHidden] = useState(true);
 
   const cursorX = useMotionValue(-100);
@@ -36,6 +38,9 @@ export default function CustomCursor() {
 
     const handleMouseLeave = () => setHidden(true);
     const handleMouseEnter = () => setHidden(false);
+    
+    const handleMouseDown = () => setClicked(true);
+    const handleMouseUp = () => setClicked(false);
 
     const addHoverListeners = () => {
       const targets = document.querySelectorAll(
@@ -50,6 +55,9 @@ export default function CustomCursor() {
     window.addEventListener("mousemove", moveCursor);
     document.addEventListener("mouseleave", handleMouseLeave);
     document.addEventListener("mouseenter", handleMouseEnter);
+    
+    window.addEventListener("mousedown", handleMouseDown);
+    window.addEventListener("mouseup", handleMouseUp);
 
     addHoverListeners();
     const observer = new MutationObserver(addHoverListeners);
@@ -59,6 +67,9 @@ export default function CustomCursor() {
       window.removeEventListener("mousemove", moveCursor);
       document.removeEventListener("mouseleave", handleMouseLeave);
       document.removeEventListener("mouseenter", handleMouseEnter);
+      
+      window.removeEventListener("mousedown", handleMouseDown);
+      window.removeEventListener("mouseup", handleMouseUp);
       observer.disconnect();
     };
   }, [mounted, cursorX, cursorY]);
@@ -77,12 +88,18 @@ export default function CustomCursor() {
           translateY: "-50%",
         }}
         animate={{
-          scale: hovered ? 1.6 : 1,
-          backgroundColor: hovered ? "rgba(250, 249, 246, 0.15)" : "rgba(0, 0, 0, 0)",
-          borderColor: hovered ? "var(--color-electric-orange)" : "var(--color-warm-white)",
+          scale: clicked ? 2.2 : hovered ? 1.6 : 1,
+          backgroundColor: clicked 
+            ? "rgba(255, 69, 0, 0.2)" 
+            : hovered 
+              ? "rgba(250, 249, 246, 0.15)" 
+              : "rgba(0, 0, 0, 0)",
+          borderColor: clicked || hovered 
+            ? "var(--color-electric-orange)" 
+            : "var(--color-warm-white)",
           opacity: hidden ? 0 : 0.85,
         }}
-        transition={{ type: "tween", ease: "backOut", duration: 0.35 }}
+        transition={{ type: "spring", stiffness: 350, damping: 20 }}
       />
 
       {/* Inner Point Dot */}
@@ -95,7 +112,7 @@ export default function CustomCursor() {
           translateY: "-50%",
         }}
         animate={{
-          scale: hovered ? 0.6 : 1,
+          scale: clicked ? 0.4 : hovered ? 0.6 : 1,
           opacity: hidden ? 0 : 1,
         }}
         transition={{ type: "tween", ease: "easeOut", duration: 0.15 }}

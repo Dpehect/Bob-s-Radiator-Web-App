@@ -73,14 +73,20 @@ export default function Heritage() {
           variants={scaleIn}
           initial="hidden"
           animate={isInView ? "visible" : "hidden"}
-          transition={{ delay: 0.4 }}
-          className="relative max-w-xl mx-auto"
+          whileHover={{
+            scale: 1.02,
+            y: -8,
+            boxShadow: "20px 20px 0px var(--color-electric-orange)",
+          }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          className="relative max-w-xl mx-auto cursor-pointer rounded-3xl"
         >
           <div
             className="relative rounded-3xl overflow-hidden
                         border border-electric-orange/10
                         bg-charcoal p-10 md:p-14
-                        shadow-[0_24px_80px_rgba(255,69,0,0.02)]"
+                        shadow-[0_24px_80px_rgba(255,69,0,0.02)]
+                        transition-shadow duration-300"
           >
             {/* Corner ornament */}
             <div className="absolute top-6 left-6 w-8 h-8 border-t border-l border-electric-orange/20" />
